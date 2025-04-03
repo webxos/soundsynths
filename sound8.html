@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mobile Synth Sequencer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            touch-action: none; /* Prevent pinch-zoom/scroll on mobile */
+        }
+        .container {
+            width: 100%;
+            max-width: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .drum-pads {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+        }
+        .pad {
+            padding: 15px;
+            background: #333;
+            border: 1px solid #555;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            font-size: 14px;
+            touch-action: manipulation; /* Optimize for touch */
+        }
+        .pad:active {
+            background: #666;
+        }
+        .sequencer {
+            display: grid;
+            grid-template-columns: repeat(16, 1fr);
+            gap: 2px;
+        }
+        .step {
+            width: 20px;
+            height: 20px;
+            background: #444;
+            border: 1px solid #666;
+            cursor: pointer;
+        }
+        .step.active {
+            background: #0f0;
+        }
+        select, button {
+            width: 100%;
+            padding: 8px;
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            font-size: 14px;
+            touch-action: manipulation;
+        }
+        button:active {
+            background: #666;
+        }
+        #xyGrid {
+            width: 100%;
+            height: 150px;
+            background: #222;
+            border: 1px solid #555;
+            position: relative;
+            touch-action: none; /* Enable precise touch control */
+        }
+        #xyCursor {
+            width: 10px;
+            height: 10px;
+            background: #0f0;
+            border-radius: 50%;
+            position: absolute;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Mobile Synth</h2>
+        
+        <!-- Drum Pads (4-piece) -->
+        <div class="drum-pads">
+            <div class="pad" id="kick">Kick</div>
+            <div class="pad" id="snare">Snare</div>
+            <div class="pad" id="hat">Hat</div>
+            <div class="pad" id="clap">Clap</div>
+        </div>
+
+        <!-- Sequencer -->
+        <div class="sequencer" id="sequencer"></div>
+
+        <!-- Controls -->
+        <select id="scale">
+            <option value="major">Major</option>
+            <option value="minor">Minor</option>
+            <option value="dorian">Dorian</option>
+            <option value="phrygian">Phrygian</option>
+            <option value="lydian">Lydian</option>
+            <option value="mixolydian">Mixolydian</option>
+            <option value="aeolian">Aeolian</option>
+            <option value="locrian">Locrian</option>
+            <option value="pentatonicMajor">Pentatonic Major</option>
+            <option value="pentatonicMinor">Pentatonic Minor</option>
+            <option value="blues">Blues</option>
+            <option value="harmonicMinor">Harmonic Minor</option>
+            <option value="melodicMinor">Melodic Minor</option>
+            <option value="wholeTone">Whole Tone</option>
+            <option value="octatonic">Octatonic</option>
+            <option value="chromatic">Chromatic</option>
+        </select>
+        <select id="tempo">
+            <option value="80">80 BPM</option>
+            <option value="120">120 BPM</option>
+            <option value="160">160 BPM</option>
+        </select>
+        <select id="synthType">
+            <option value="sine">Sine</option>
+            <option value="square">Square</option>
+            <option value="sawtooth">Sawtooth</option>
+            <option value="triangle">Triangle</option>
+        </select>
+        <button id="generate">Auto Generate</button>
+        <button id="play">Play</button>
+        <button id="stop">Stop</button>
+
+        <!-- XY Grid for Echo Control -->
+        <div id="xyGrid">
+            <div id="xyCursor"></div>
+        </div>
+    </div>
+
+    <script>
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let isPlaying = false;
+        let currentStep = 0;
+        let intervalId = null;
+        const drumAssignments = {};
+
+        // Effects Chain: Reverb, Echo, and Limiter
+        const reverb = audioContext.createConvolver();
+        const echo = audioContext.createDelay();
+        const echoGain = audioContext.createGain();
+        const outputGain = audioContext.createGain();
+        const limiter = audioContext.createDynamicsCompressor();
+
+        // Setup Reverb Impulse Response
+        const reverbLength = audioContext.sampleRate * 1.5;
+        const impulse = audioContext.createBuffer(2, reverbLength, audioContext.sampleRate);
+        for (let channel = 0; channel < 2; channel++) {
+            const impulseData = impulse.getChannelData(channel);
+            for (let i = 0; i < reverbLength; i++) {
+                impulseData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / reverbLength, 3);
+            }
+        }
+        reverb.buffer = impulse;
+
+        // Setup Echo (controlled by XY grid)
+        echo.delayTime.value = 0.25; // Initial value
+        echoGain.gain.value = 0.3; // Initial value
+
+        // Setup Limiter
+        limiter.threshold.setValueAtTime(-3, audioContext.currentTime);
+        limiter.knee.setValueAtTime(0, audioContext.currentTime);
+        limiter.ratio.setValueAtTime(20, audioContext.currentTime);
+        limiter.attack.setValueAtTime(0.001, audioContext.currentTime);
+        limiter.release.setValueAtTime(0.1, audioContext.currentTime);
+
+        // Connect Effects Chain
+        echo.connect(echoGain);
+        echoGain.connect(echo);
+        echo.connect(outputGain);
+        reverb.connect(outputGain);
+        outputGain.connect(limiter);
+        limiter.connect(audioContext.destination);
+        outputGain.gain.value = 0.5;
+
+        // Drum Samples (4-piece)
+        const drumSounds = {
+            kick: () => createDrumSound(50, 0.3, 0.7),
+            snare: () => createDrumSound(200, 0.2, 0.7),
+            hat: () => createDrumSound(1000, 0.1, 0.6),
+            clap: () => createDrumSound(300, 0.15, 0.7)
+        };
+
+        function createDrumSound(freq, duration, gainValue = 1.0) {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.connect(gain);
+            gain.connect(echo);
+            gain.connect(reverb);
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(gainValue, audioContext.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            osc.start();
+            osc.stop(audioContext.currentTime + duration);
+        }
+
+        // Distorted Synth with Selectable Waveform
+        function playBass(note) {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            const distortion = audioContext.createWaveShaper();
+            osc.type = document.getElementById('synthType').value;
+            osc.frequency.value = midiToFreq(note);
+            distortion.curve = makeDistortionCurve(30);
+            osc.connect(distortion);
+            distortion.connect(gain);
+            gain.connect(echo);
+            gain.connect(reverb);
+            gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            osc.start();
+            osc.stop(audioContext.currentTime + 0.5);
+        }
+
+        function makeDistortionCurve(amount) {
+            const k = amount || 30;
+            const n_samples = 44100;
+            const curve = new Float32Array(n_samples);
+            const deg = Math.PI / 180;
+            for (let i = 0; i < n_samples; ++i) {
+                const x = (i * 2) / n_samples - 1;
+                curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+            }
+            return curve;
+        }
+
+        function midiToFreq(midi) {
+            return 440 * Math.pow(2, (midi - 69) / 12);
+        }
+
+        // Sequencer Setup
+        const sequencer = document.getElementById('sequencer');
+        const steps = [];
+        for (let i = 0; i < 16; i++) {
+            const step = document.createElement('div');
+            step.classList.add('step');
+            step.dataset.index = i;
+            step.addEventListener('touchstart', () => step.classList.toggle('active'), { passive: false });
+            sequencer.appendChild(step);
+            steps.push(step);
+        }
+
+        // Drum Pads
+        document.querySelectorAll('.pad').forEach(pad => {
+            pad.addEventListener('touchstart', () => drumSounds[pad.id](), { passive: false });
+        });
+
+        // XY Grid for Echo Control
+        const xyGrid = document.getElementById('xyGrid');
+        const xyCursor = document.getElementById('xyCursor');
+        let isDragging = false;
+
+        function updateEcho(x, y) {
+            const rect = xyGrid.getBoundingClientRect();
+            const xPos = Math.max(0, Math.min(x - rect.left, rect.width)) / rect.width;
+            const yPos = Math.max(0, Math.min(y - rect.top, rect.height)) / rect.height;
+
+            // X-axis: Delay Time (0.1s to 1s)
+            echo.delayTime.value = 0.1 + (xPos * 0.9);
+            // Y-axis: Feedback Gain (0 to 0.7)
+            echoGain.gain.value = yPos * 0.7;
+
+            xyCursor.style.left = `${xPos * 100}%`;
+            xyCursor.style.top = `${yPos * 100}%`;
+        }
+
+        xyGrid.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isDragging = true;
+            const touch = e.touches[0];
+            updateEcho(touch.clientX, touch.clientY);
+        });
+
+        xyGrid.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (isDragging) {
+                const touch = e.touches[0];
+                updateEcho(touch.clientX, touch.clientY);
+            }
+        });
+
+        xyGrid.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+
+        // Scales for Arpeggiator (two octaves)
+        const scales = {
+            major: [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19, 21, 23],
+            minor: [0, 2, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19, 20, 22],
+            dorian: [0, 2, 3, 5, 7, 9, 10, 12, 14, 15, 17, 19, 21, 22],
+            phrygian: [0, 1, 3, 5, 7, 8, 10, 12, 13, 15, 17, 18, 20, 22],
+            lydian: [0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23],
+            mixolydian: [0, 2, 4, 5, 7, 9, 10, 12, 14, 16, 17, 19, 21, 22],
+            aeolian: [0, 2, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19, 20, 22],
+            locrian: [0, 1, 3, 5, 6, 8, 10, 12, 13, 15, 17, 18, 20, 22],
+            pentatonicMajor: [0, 2, 4, 7, 9, 12, 14, 16, 19, 21],
+            pentatonicMinor: [0, 3, 5, 7, 10, 12, 15, 17, 19, 22],
+            blues: [0, 3, 5, 6, 7, 10, 12, 15, 17, 18, 19, 22],
+            harmonicMinor: [0, 2, 3, 5, 7, 8, 11, 12, 14, 15, 17, 19, 20, 23],
+            melodicMinor: [0, 2, 3, 5, 7, 9, 11, 12, 14, 15, 17, 19, 21, 23],
+            wholeTone: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22],
+            octatonic: [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22],
+            chromatic: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+        };
+
+        // Generate a random melody pattern
+        function generateMelodyPattern(scale) {
+            const patternLength = 16;
+            const pattern = [];
+            const scaleLength = scale.length;
+            let direction = Math.random() > 0.5 ? 1 : -1;
+            let currentIndex = Math.floor(Math.random() * scaleLength);
+
+            for (let i = 0; i < patternLength; i++) {
+                pattern.push(scale[currentIndex]);
+                if (Math.random() > 0.7) direction *= -1;
+                currentIndex = (currentIndex + direction + Math.floor(Math.random() * 3)) % scaleLength;
+                if (currentIndex < 0) currentIndex += scaleLength;
+            }
+            return pattern;
+        }
+
+        // Auto Generate Random Beats with Drum Assignments
+        document.getElementById('generate').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            steps.forEach(step => step.classList.remove('active'));
+            Object.keys(drumAssignments).forEach(key => delete drumAssignments[key]);
+            
+            const pattern = Math.random() > 0.5 ? '4/4' : 'random';
+            const drumTypes = Object.keys(drumSounds);
+
+            if (pattern === '4/4') {
+                [0, 4, 8, 12].forEach(i => {
+                    steps[i].classList.add('active');
+                    drumAssignments[i] = 'kick';
+                });
+                [2, 6, 10, 14].forEach(i => {
+                    steps[i].classList.add('active');
+                    drumAssignments[i] = 'snare';
+                });
+                [0, 2, 4, 6, 8, 10, 12, 14].forEach(i => {
+                    if (!drumAssignments[i] && Math.random() > 0.5) {
+                        steps[i].classList.add('active');
+                        drumAssignments[i] = 'hat';
+                    }
+                });
+            } else {
+                steps.forEach((step, i) => {
+                    if (Math.random() > 0.7) {
+                        step.classList.add('active');
+                        drumAssignments[i] = drumTypes[Math.floor(Math.random() * drumTypes.length)];
+                    }
+                });
+            }
+        }, { passive: false });
+
+        // Play Logic
+        document.getElementById('play').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!isPlaying) {
+                isPlaying = true;
+                const tempo = parseInt(document.getElementById('tempo').value);
+                const scale = scales[document.getElementById('scale').value];
+                const melodyPattern = generateMelodyPattern(scale);
+                let stepIndex = 0;
+
+                intervalId = setInterval(() => {
+                    steps.forEach((step, i) => {
+                        if (i === currentStep && step.classList.contains('active')) {
+                            const drum = drumAssignments[i] || 'kick';
+                            drumSounds[drum]();
+                            const note = 36 + melodyPattern[stepIndex];
+                            playBass(note);
+                        }
+                    });
+                    currentStep = (currentStep + 1) % 16;
+                    stepIndex = (stepIndex + 1) % melodyPattern.length;
+                }, 60000 / (tempo * 4));
+            }
+        }, { passive: false });
+
+        document.getElementById('stop').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isPlaying = false;
+            clearInterval(intervalId);
+            currentStep = 0;
+        }, { passive: false });
+    </script>
+</body>
+</html>
