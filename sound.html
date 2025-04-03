@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeon Synth - Mythical Symphony</title>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            margin: 0;
+            padding: 10px;
+            background: linear-gradient(to bottom, #1a1a2e, #16213e);
+            color: #e0e0e0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        h1 {
+            font-size: 20px;
+            margin: 5px 0;
+            text-shadow: 0 0 5px #a3bffa;
+        }
+        .drum-rack, .synth-keys, .controls {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #4a4e69;
+            border-radius: 5px;
+            padding: 10px;
+            width: 100%;
+            max-width: 340px;
+            box-shadow: inset 0 0 10px rgba(163, 191, 250, 0.2);
+        }
+        .drum-rack h2, .synth-keys h2, .controls h2 {
+            font-size: 14px;
+            margin: 0 0 5px 0;
+            color: #9a86c9;
+        }
+        .drum-pads {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
+        }
+        .drum-pad {
+            width: 50px;
+            height: 50px;
+            background: #4a4e69;
+            color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 12px;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .drum-pad:hover { background: #5c6185; box-shadow: 0 0 5px #a3bffa; }
+        .drum-pad:active { background: #3b3f57; }
+        .synth-keys {
+            display: flex;
+            width: 100%;
+            height: 80px;
+            overflow-x: auto;
+        }
+        .key {
+            flex: 0 0 20px;
+            height: 100%;
+            border: 1px solid #4a4e69;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .white { background: #e0e0e0; }
+        .black {
+            flex: 0 0 12px;
+            height: 50px;
+            background: #2e2e47;
+            margin-left: -6px;
+            margin-right: -6px;
+            position: relative;
+            z-index: 1;
+        }
+        .key:hover { background: #a3bffa; }
+        .key:active { background: #7b89c9; }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        button, select {
+            padding: 8px 12px;
+            font-size: 14px;
+            background: #4a4e69;
+            color: #e0e0e0;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover, select:hover { background: #5c6185; }
+        #arp-toggle.active { background: #9a86c9; }
+        #arp-toggle.active:hover { background: #7b69a8; }
+    </style>
+</head>
+<body>
+    <h1>Mythical Dungeon Synth</h1>
+
+    <div class="drum-rack">
+        <h2>Ancient Percussion</h2>
+        <div class="drum-pads">
+            <div class="drum-pad" data-note="war-drum">War Drum</div>
+            <div class="drum-pad" data-note="gong">Gong</div>
+            <div class="drum-pad" data-note="chime">Chime</div>
+            <div class="drum-pad" data-note="rattle">Rattle</div>
+            <div class="drum-pad" data-note="deep-bell">Deep Bell</div>
+            <div class="drum-pad" data-note="echo">Echo</div>
+            <div class="drum-pad" data-note="drip">Drip</div>
+            <div class="drum-pad" data-note="creak">Creak</div>
+            <div class="drum-pad" data-note="howl">Howl</div>
+        </div>
+    </div>
+
+    <div class="synth-keys">
+        <h2>Celestial Keys (C3-B4)</h2>
+        <div class="synth-keys">
+            <div class="key white" data-note="130.81"></div> <!-- C3 -->
+            <div class="key black" data-note="138.59"></div> <!-- C#3 -->
+            <div class="key white" data-note="146.83"></div> <!-- D3 -->
+            <div class="key black" data-note="155.56"></div> <!-- D#3 -->
+            <div class="key white" data-note="164.81"></div> <!-- E3 -->
+            <div class="key white" data-note="174.61"></div> <!-- F3 -->
+            <div class="key black" data-note="185.00"></div> <!-- F#3 -->
+            <div class="key white" data-note="196.00"></div> <!-- G3 -->
+            <div class="key black" data-note="207.65"></div> <!-- G#3 -->
+            <div class="key white" data-note="220.00"></div> <!-- A3 -->
+            <div class="key black" data-note="233.08"></div> <!-- A#3 -->
+            <div class="key white" data-note="246.94"></div> <!-- B3 -->
+            <div class="key white" data-note="261.63"></div> <!-- C4 -->
+            <div class="key black" data-note="277.18"></div> <!-- C#4 -->
+            <div class="key white" data-note="293.66"></div> <!-- D4 -->
+            <div class="key black" data-note="311.13"></div> <!-- D#4 -->
+            <div class="key white" data-note="329.63"></div> <!-- E4 -->
+            <div class="key white" data-note="349.23"></div> <!-- F4 -->
+            <div class="key black" data-note="369.99"></div> <!-- F#4 -->
+            <div class="key white" data-note="392.00"></div> <!-- G4 -->
+            <div class="key black" data-note="415.30"></div> <!-- G#4 -->
+            <div class="key white" data-note="440.00"></div> <!-- A4 -->
+            <div class="key black" data-note="466.16"></div> <!-- A#4 -->
+            <div class="key white" data-note="493.88"></div> <!-- B4 -->
+        </div>
+    </div>
+
+    <div class="controls">
+        <h2>Controls</h2>
+        <button id="autoplay">Start Symphony</button>
+        <button id="arp-toggle">Arp Off</button>
+        <select id="synth-type">
+            <option value="sawtooth">Sawtooth</option>
+            <option value="sine">Sine</option>
+            <option value="triangle">Triangle</option>
+            <option value="square">Square</option>
+        </select>
+        <select id="arp-speed">
+            <option value="0.125">Very Fast</option>
+            <option value="0.25">Swift</option>
+            <option value="0.5" selected>Moderate</option>
+            <option value="1">Solemn</option>
+            <option value="2">Very Slow</option>
+        </select>
+        <select id="arp-mode">
+            <option value="up">Up</option>
+            <option value="down">Down</option>
+            <option value="up-down">Up-Down</option>
+            <option value="random">Random</option>
+            <option value="long">Long Sequence</option>
+        </select>
+        <select id="song-select">
+            <option value="dungeon">Dungeon Depths</option>
+            <option value="crypt">Crypt Whispers</option>
+            <option value="forest">Enchanted Forest</option>
+        </select>
+    </div>
+
+    <script>
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const reverb = audioContext.createConvolver();
+        const gainNodeMaster = audioContext.createGain();
+        gainNodeMaster.connect(audioContext.destination);
+        let isPlaying = false;
+        let isArpActive = false;
+        let intervalId = null;
+        let arpIntervalId = null;
+
+        // Reverb Setup
+        function setupReverb() {
+            const impulse = audioContext.createBuffer(2, audioContext.sampleRate * 2, audioContext.sampleRate);
+            for (let channel = 0; channel < 2; channel++) {
+                const channelData = impulse.getChannelData(channel);
+                for (let i = 0; i < channelData.length; i++) {
+                    channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / channelData.length, 3);
+                }
+            }
+            reverb.buffer = impulse;
+        }
+        setupReverb();
+
+        // Dungeon Synth Percussion Sounds with Spooky Additions
+        function playDrum(note) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(reverb);
+            reverb.connect(gainNodeMaster);
+
+            switch (note) {
+                case 'war-drum':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(80, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
+                    gainNode.gain.setValueAtTime(1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
+                    break;
+                case 'gong':
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.setValueAtTime(120, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.2);
+                    break;
+                case 'chime':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.6);
+                    break;
+                case 'rattle':
+                    oscillator.type = 'square';
+                    oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+                    break;
+                case 'deep-bell':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(60, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.5);
+                    break;
+                case 'echo':
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.9);
+                    break;
+                case 'drip':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+                    break;
+                case 'creak':
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.7);
+                    break;
+                case 'howl':
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(110, audioContext.currentTime + 1.0);
+                    gainNode.gain.setValueAtTime(0.6, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.0);
+                    break;
+            }
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 1.5);
+        }
+
+        // Synth Sounds with Multiple Waveforms and Reverb
+        function playSynth(frequency) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(reverb);
+            reverb.connect(gainNodeMaster);
+
+            oscillator.type = document.getElementById('synth-type').value;
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.2);
+
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 1.2);
+        }
+
+        // Manual Play
+        document.querySelectorAll('.drum-pad').forEach(pad => {
+            pad.addEventListener('click', () => playDrum(pad.getAttribute('data-note')));
+        });
+
+        document.querySelectorAll('.key').forEach(key => {
+            key.addEventListener('click', () => playSynth(parseFloat(key.getAttribute('data-note'))));
+        });
+
+        // Dungeon Synth Generation
+        const autoplayButton = document.getElementById('autoplay');
+        const arpToggleButton = document.getElementById('arp-toggle');
+        const arpSpeedSelect = document.getElementById('arp-speed');
+        const arpModeSelect = document.getElementById('arp-mode');
+        const songSelect = document.getElementById('song-select');
+        const bpm = 60 + Math.floor(Math.random() * 60); // 60-120 BPM
+        const beat = 60 / bpm * 1000;
+        const barLength = beat * 4;
+        const drumTypes = ['war-drum', 'gong', 'chime', 'rattle', 'deep-bell', 'echo', 'drip', 'creak', 'howl'];
+
+        // A Minor Scale (C3 to B4 subset)
+        const aMinorScale = [
+            130.81, 146.83, 155.56, 174.61, 196.00, 207.65, 233.08,
+            261.63, 293.66, 311.13, 349.23, 392.00, 415.30, 466.16
+        ];
+
+        function generateRandomDrumPattern(song) {
+            const drumPattern = [];
+            const steps = 16; // Longer pattern
+            const density = song === 'dungeon' ? 0.5 : song === 'crypt' ? 0.4 : 0.6;
+            for (let i = 0; i < steps; i++) {
+                if (Math.random() > density) {
+                    const drum = drumTypes[Math.floor(Math.random() * drumTypes.length)];
+                    drumPattern.push({ note: drum, time: i * (beat / 4) });
+                }
+            }
+            return drumPattern;
+        }
+
+        function generateArpPattern(mode) {
+            const noteCount = mode === 'long' ? 12 : 5 + Math.floor(Math.random() * 4);
+            const arpNotes = [];
+            const startIndex = Math.floor(Math.random() * (aMinorScale.length - noteCount));
+            for (let i = 0; i < noteCount; i++) {
+                arpNotes.push(aMinorScale[startIndex + i]);
+            }
+
+            let sequence = [];
+            if (mode === 'up') sequence = [...arpNotes];
+            else if (mode === 'down') sequence = [...arpNotes].reverse();
+            else if (mode === 'up-down') sequence = [...arpNotes, ...[...arpNotes].reverse()];
+            else if (mode === 'random') sequence = [...arpNotes].sort(() => Math.random() - 0.5);
+            else if (mode === 'long') sequence = [...arpNotes];
+
+            if (Math.random() > 0.6) {
+                const jumpIndex = Math.floor(Math.random() * sequence.length);
+                sequence[jumpIndex] *= 2; // Octave jump
+            }
+
+            return { sequence, mode };
+        }
+
+        let arpPattern = generateArpPattern(arpModeSelect.value);
+        let arpIndex = 0;
+
+        function playBar(drumPattern) {
+            drumPattern.forEach(d => setTimeout(() => playDrum(d.note), d.time));
+        }
+
+        function playArpNote() {
+            playSynth(arpPattern.sequence[arpIndex]);
+            arpIndex = (arpIndex + 1) % arpPattern.sequence.length;
+        }
+
+        // Predefined Songs
+        const songs = {
+            dungeon: { bpm: 80, density: 0.5, arpMode: 'long' },
+            crypt: { bpm: 60, density: 0.4, arpMode: 'random' },
+            forest: { bpm: 100, density: 0.6, arpMode: 'up-down' }
+        };
+
+        // Autoplay Toggle
+        autoplayButton.addEventListener('click', () => {
+            if (!isPlaying) {
+                isPlaying = true;
+                autoplayButton.textContent = 'Stop Symphony';
+                const song = songSelect.value;
+                const drumPattern = generateRandomDrumPattern(song);
+                arpPattern = generateArpPattern(arpModeSelect.value);
+                arpIndex = 0;
+                playBar(drumPattern);
+                intervalId = setInterval(() => playBar(drumPattern), barLength);
+
+                if (isArpActive) {
+                    const arpSpeed = parseFloat(arpSpeedSelect.value) * beat;
+                    arpIntervalId = setInterval(playArpNote, arpSpeed);
+                }
+            } else {
+                isPlaying = false;
+                autoplayButton.textContent = 'Start Symphony';
+                clearInterval(intervalId);
+                clearInterval(arpIntervalId);
+                intervalId = null;
+                arpIntervalId = null;
+            }
+        });
+
+        // Arpeggiator Toggle
+        arpToggleButton.addEventListener('click', () => {
+            isArpActive = !isArpActive;
+            arpToggleButton.textContent = isArpActive ? 'Arp On' : 'Arp Off';
+            arpToggleButton.classList.toggle('active', isArpActive);
+
+            if (isPlaying) {
+                if (isArpActive && !arpIntervalId) {
+                    const arpSpeed = parseFloat(arpSpeedSelect.value) * beat;
+                    arpIntervalId = setInterval(playArpNote, arpSpeed);
+                } else if (!isArpActive && arpIntervalId) {
+                    clearInterval(arpIntervalId);
+                    arpIntervalId = null;
+                }
+            }
+        });
+
+        // Arpeggiator Speed/Mode/Song Change
+        function updateArp() {
+            if (isPlaying && isArpActive) {
+                clearInterval(arpIntervalId);
+                arpPattern = generateArpPattern(arpModeSelect.value);
+                arpIndex = 0;
+                const arpSpeed = parseFloat(arpSpeedSelect.value) * beat;
+                arpIntervalId = setInterval(playArpNote, arpSpeed);
+            }
+        }
+
+        arpSpeedSelect.addEventListener('change', updateArp);
+        arpModeSelect.addEventListener('change', updateArp);
+        songSelect.addEventListener('change', () => {
+            if (isPlaying) {
+                clearInterval(intervalId);
+                clearInterval(arpIntervalId);
+                const drumPattern = generateRandomDrumPattern(songSelect.value);
+                playBar(drumPattern);
+                intervalId = setInterval(() => playBar(drumPattern), barLength);
+                updateArp();
+            }
+        });
+    </script>
+</body>
+</html>
