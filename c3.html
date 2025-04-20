@@ -1,0 +1,89 @@
+class AmbientSynth {
+    constructor(masterGain) {
+        this.loops = [];
+        this.notes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 466.16, 523.25, 587.33, 659.25];
+        this.masterGain = masterGain;
+        this.masterGain.gain.value = 0.3 * 0.7; // Initial volume at 70%
+        this.generateLoops();
+    }
+
+    generateLoops() {
+        for (let i = 0; i < 10; i++) {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            const filter = audioContext.createBiquadFilter(); // Add filter for all loops
+            osc.type = i === 3 ? 'sawtooth' : i === 1 ? 'sawtooth' : i % 2 === 0 ? 'triangle' : 'sine'; // Wind and Sweep use sawtooth for richer harmonics
+            osc.frequency.setValueAtTime(this.notes[i], audioContext.currentTime);
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(i === 3 ? 800 : i === 1 ? 1000 : 2000, audioContext.currentTime); // Default filter frequencies
+            filter.Q.setValueAtTime(1, audioContext.currentTime); // Moderate resonance
+            gain.gain.setValueAtTime(0, audioContext.currentTime);
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.masterGain);
+            osc.start();
+            this.loops.push({ osc, filter, gain, active: false });
+            console.log(`Loop ${i} created: freq=${this.notes[i]} Hz, type=${osc.type}, filter=${filter.frequency.value} Hz`);
+        }
+        // Add filter sweep modulation for Wind and Sweep
+        this.addWindModulation(3); // Wind
+        this.addSweepModulation(1); // Sweep
+    }
+
+    addWindModulation(loopIndex) {
+        const loop = this.loops[loopIndex];
+        const lfo = audioContext.createOscillator();
+        const lfoGain = audioContext.createGain();
+        lfo.type = 'sine';
+        lfo.frequency.setValueAtTime(0.3, audioContext.currentTime); // Slow for airy, wind-like effect
+        lfoGain.gain.setValueAtTime(300, audioContext.currentTime); // Modulate filter frequency ±300 Hz
+        lfo.connect(lfoGain);
+        lfoGain.connect(loop.filter.frequency); // Modulate filter frequency instead of detune
+        lfo.start();
+        loop.lfo = lfo; // Store for cleanup
+        console.log(`Wind filter sweep added for loop ${loopIndex}: LFO freq=0.3 Hz, depth=300 Hz`);
+    }
+
+    addSweepModulation(loopIndex) {
+        const loop = this.loops[loopIndex];
+        const lfo = audioContext.createOscillator();
+        const lfoGain = audioContext.createGain();
+        lfo.type = 'sine';
+        lfo.frequency.setValueAtTime(0.1, audioContext.currentTime); // Very slow for dramatic sweep
+        lfoGain.gain.setValueAtTime(600, audioContext.currentTime); // Wider filter sweep ±600 Hz
+        lfo.connect(lfoGain);
+        lfoGain.connect(loop.filter.frequency); // Modulate filter frequency
+        lfo.start();
+        loop.lfo = lfo; // Store for cleanup
+        console.log(`Sweep filter sweep added for loop ${loopIndex}: LFO freq=0.1 Hz, depth=600 Hz`);
+    }
+
+    toggleLoop(index) {
+        if (index < 0 || index >= this.loops.length) {
+            console.error(`Invalid loop index: ${index}`);
+            return;
+        }
+        const loop = this.loops[index];
+        loop.active = !loop.active;
+        console.log(`Toggling loop ${index} (Wind=${index === 3}, Sweep=${index === 1}): active=${loop.active}`);
+        if (loop.active) {
+            this.fadeIn(loop.gain);
+        } else {
+            this.fadeOut(loop.gain);
+        }
+    }
+
+    fadeIn(gainNode) {
+        gainNode.gain.cancelScheduledValues(audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.25, audioContext.currentTime + 2); // Slightly higher gain for audibility
+        console.log(`FadeIn: gain ramp to 0.25`);
+    }
+
+    fadeOut(gainNode) {
+        gainNode.gain.cancelScheduledValues(audioContext.currentTime);
+        gainNode.gain.setValueAtTime(gainNode.gain.value, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 2);
+        console.log(`FadeOut: gain ramp to 0`);
+    }
+}
