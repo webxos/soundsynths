@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Drone Synth: Create unique drone and noise synth sounds for eco-friendly music production. Experiment with ambient pads and drone loops to enhance your music catalog.">
-    <meta name="keywords" content="drone synth, noise synth, eco-friendly music production, synth lines, ambient pads, drone loops, music production, experimental music, synth catalog">
+    <meta name="description" content="Drone Synth: Create unique drone and noise synth sounds for eco-friendly music production. Experiment with ambient pads and drone loops.">
+    <meta name="keywords" content="drone synth, noise synth, eco-friendly music production, ambient pads, drone loops, music production, experimental music">
     <meta name="author" content="SoundSynths">
     <meta name="robots" content="index, follow">
-    <meta property="og:title" content="Drone Synth - Drone & Noise Synth for Musicians">
-    <meta property="og:description" content="Explore Drone Synth to produce unique drone and noise sounds for your music projects. Perfect for eco-conscious musicians experimenting with synth lines.">
+    <meta property="og:title" content="Drone Synth - Drone & Noise Synth">
+    <meta property="og:description" content="Produce unique drone and noise sounds with Drone Synth, designed for eco-conscious musicians.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://yourwebsite.com/drone-synth">
     <meta property="og:image" content="https://yourwebsite.com/images/drone-synth-og.jpg">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Drone Synth - Drone & Noise Synth">
-    <meta name="twitter:description" content="Create experimental drone and noise synth sounds for music production with Drone Synth, designed for eco-friendly musicians.">
+    <meta name="twitter:description" content="Create experimental drone and noise synth sounds with Drone Synth.">
     <meta name="twitter:image" content="https://yourwebsite.com/images/drone-synth-twitter.jpg">
     <link rel="icon" type="image/png" href="https://yourwebsite.com/favicon.ico">
     <title>Drone Synth</title>
@@ -23,6 +23,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            user-select: none;
         }
 
         body {
@@ -32,16 +33,16 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            align-items: center;
             overflow: hidden;
         }
 
         h1 {
-            font-size: 1.5625rem;
-            text-shadow: 0 0 5px #fff;
-            letter-spacing: 2px;
+            font-size: 1.25rem;
+            text-shadow: 0 0 4px #fff;
+            letter-spacing: 1.5px;
             text-align: center;
-            padding: 10px 0;
-            line-height: 1.2;
+            padding: 8px 0;
         }
 
         .container {
@@ -50,18 +51,18 @@
             max-width: 100vw;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            padding: 10px;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
         }
 
         .xy-grid {
             width: 150px;
             height: 150px;
-            margin: 0 auto;
             background: rgba(10, 10, 10, 0.9);
             border: 2px solid #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 5px #fff, inset 0 0 3px rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            box-shadow: 0 0 4px #fff;
             position: relative;
             overflow: hidden;
             cursor: crosshair;
@@ -75,43 +76,39 @@
         }
 
         .drum-rack, .controls {
+            width: 100%;
+            max-width: 320px;
             background: rgba(10, 10, 10, 0.9);
             border: 2px solid #fff;
-            border-radius: 8px;
-            padding: 8px;
-            box-shadow: 0 0 5px #fff, inset 0 0 3px rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
-        }
-
-        .drum-rack:hover, .controls:hover {
-            box-shadow: 0 0 10px #fff, inset 0 0 5px rgba(255, 255, 255, 0.4);
+            border-radius: 6px;
+            padding: 6px;
+            box-shadow: 0 0 4px #fff;
         }
 
         h2 {
-            font-size: 0.9375rem;
-            margin: 0 0 6px 0;
+            font-size: 0.75rem;
+            margin: 0 0 4px 0;
             color: #fff;
-            text-shadow: 0 0 3px #fff;
-            line-height: 1.2;
+            text-shadow: 0 0 2px #fff;
         }
 
         .drum-pads {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(35px, 1fr));
-            gap: 6px;
+            grid-template-columns: repeat(auto-fit, minmax(30px, 1fr));
+            gap: 4px;
         }
 
         .drum-pad {
             background: #1a1a1a;
             color: #fff;
-            border: 2px solid #fff;
+            border: 1px solid #fff;
             border-radius: 4px;
-            padding: 4px;
+            padding: 3px;
             text-align: center;
             cursor: pointer;
-            font-size: 0.5rem;
-            min-width: 35px;
-            min-height: 17.5px;
+            font-size: 0.45rem;
+            min-width: 30px;
+            min-height: 15px;
             aspect-ratio: 2/1;
             display: flex;
             align-items: center;
@@ -121,13 +118,12 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            line-height: 1.2;
         }
 
         .drum-pad:hover {
             background: #fff;
             color: #000;
-            box-shadow: 0 0 5px #fff;
+            box-shadow: 0 0 4px #fff;
         }
 
         .drum-pad:active {
@@ -137,48 +133,43 @@
 
         .controls {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
-            gap: 6px;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: 4px;
+            align-items: center;
         }
 
-        button, select {
+        button {
             background: #1a1a1a;
             color: #fff;
-            border: 2px solid #fff;
+            border: 1px solid #fff;
             border-radius: 4px;
-            padding: 4px;
-            font-size: 0.5rem;
-            min-width: 45px;
-            min-height: 22.5px;
-            aspect-ratio: 2/1;
+            padding: 3px;
+            font-size: 0.45rem;
+            min-width: 40px;
+            min-height: 20px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s ease;
             touch-action: manipulation;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            line-height: 1.2;
         }
 
         input[type="range"] {
+            width: 40px;
+            height: 14px;
             background: #1a1a1a;
-            border: 2px solid #fff;
+            border: 1px solid #fff;
             border-radius: 4px;
-            padding: 2px;
-            width: 45px;
-            height: 16px;
+            padding: 1px;
             cursor: pointer;
-            transition: all 0.2s ease;
             touch-action: manipulation;
         }
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             background: #fff;
             border: 1px solid #000;
             border-radius: 2px;
@@ -186,68 +177,75 @@
         }
 
         input[type="range"]::-moz-range-thumb {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             background: #fff;
             border: 1px solid #000;
             border-radius: 2px;
             cursor: pointer;
         }
 
-        button:hover, select:hover, input[type="range"]:hover {
+        button:hover, input[type="range"]:hover {
             background: #fff;
             color: #000;
-            box-shadow: 0 0 5px #fff;
+            box-shadow: 0 0 4px #fff;
         }
 
-        #arp-toggle.active {
-            background: #fff;
-            color: #000;
+        label {
+            font-size: 0.45rem;
+            color: #ccc;
+            text-align: center;
         }
 
         footer {
             text-align: center;
-            font-size: 0.75rem;
-            padding: 10px 0;
+            font-size: 0.65rem;
+            padding: 8px 0;
             color: #ccc;
         }
 
         @media (min-width: 401px) {
             h1 {
-                font-size: 1.875rem;
+                font-size: 1.5rem;
             }
             h2 {
-                font-size: 1.1rem;
+                font-size: 0.9rem;
             }
             .container {
-                gap: 12px;
-                padding: 12px;
-            }
-            .drum-pads {
-                grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
-                gap: 7.5px;
-            }
-            .controls {
-                grid-template-columns: repeat(auto-fit, minmax(55px, 1fr));
-                gap: 7.5px;
-            }
-            .drum-pad {
-                min-width: 45px;
-                min-height: 22.5px;
-                font-size: 0.55rem;
-            }
-            button, select {
-                min-width: 55px;
-                min-height: 27.5px;
-                font-size: 0.55rem;
-            }
-            input[type="range"] {
-                width: 55px;
-                height: 18px;
+                gap: 10px;
+                padding: 10px;
             }
             .xy-grid {
                 width: 187.5px;
                 height: 187.5px;
+            }
+            .drum-rack, .controls {
+                max-width: 400px;
+            }
+            .drum-pads {
+                grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+                gap: 5px;
+            }
+            .drum-pad {
+                min-width: 40px;
+                min-height: 20px;
+                font-size: 0.5rem;
+            }
+            .controls {
+                grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+                gap: 5px;
+            }
+            button {
+                min-width: 50px;
+                min-height: 25px;
+                font-size: 0.5rem;
+            }
+            input[type="range"] {
+                width: 50px;
+                height: 16px;
+            }
+            label {
+                font-size: 0.5rem;
             }
         }
     </style>
@@ -276,34 +274,15 @@
         </div>
         <div class="controls">
             <h2>Drone Controls</h2>
-            <button id="autoplay">Start Descent</button>
-            <button id="arp-toggle">Arp Off</button>
-            <select id="synth-type">
-                <option value="sawtooth">Sawtooth</option>
-                <option value="sine">Sine</option>
-                <option value="triangle">Triangle</option>
-                <option value="square">Square</option>
-            </select>
-            <select id="arp-speed">
-                <option value="0.125">Very Fast</option>
-                <option value="0.25">Swift</option>
-                <option value="0.5" selected>Moderate</option>
-                <option value="1">Solemn</option>
-                <option value="2">Very Slow</option>
-            </select>
-            <select id="arp-mode">
-                <option value="up">Up</option>
-                <option value="down">Down</option>
-                <option value="up-down">Up-Down</option>
-                <option value="random">Random</option>
-                <option value="long">Long Sequence</option>
-            </select>
-            <select id="song-select">
-                <option value="dungeon">Dungeon Depths</option>
-                <option value="crypt">Crypt Whispers</option>
-                <option value="void">Abyssal Void</option>
-            </select>
-            <input type="range" id="delay-time" min="0.1" max="1" step="0.01" value="0.3">
+            <button id="auto-gen">Auto Gen</button>
+            <div>
+                <label for="tempo">Tempo</label>
+                <input type="range" id="tempo" min="50" max="80" step="1" value="60">
+            </div>
+            <div>
+                <label for="delay-time">Delay</label>
+                <input type="range" id="delay-time" min="0.1" max="1" step="0.01" value="0.3">
+            </div>
         </div>
     </div>
     <footer>© SoundSynths 2025</footer>
@@ -357,9 +336,7 @@
         analyser.fftSize = 256;
 
         let isPlaying = false;
-        let isArpActive = false;
         let intervalId = null;
-        let arpIntervalId = null;
         let loopIntervals = {};
 
         function setupReverb() {
@@ -543,7 +520,7 @@
                 const gridWidth = canvas.width * 0.8;
                 const gridHeight = canvas.height * 0.6;
 
-                rotationAngle += 0.005;
+                rotationAngle += 0.002;
                 const rotation = Math.sin(rotationAngle) * 0.0873;
 
                 for (let i = 0; i <= gridSize; i++) {
@@ -578,6 +555,25 @@
                 }
             } catch (err) {
                 console.error('Error in draw3DGrid:', err);
+            }
+        }
+
+        function drawStaticGrid() {
+            try {
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+                ctx.lineWidth = 0.5;
+                for (let i = 0; i <= 10; i++) {
+                    const x = (i / 10) * canvas.width;
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    const y = (i / 10) * canvas.height;
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                }
+                ctx.stroke();
+            } catch (err) {
+                console.error('Error in drawStaticGrid:', err);
             }
         }
 
@@ -616,7 +612,8 @@
                 console.error('Error in drawXYGrid:', err);
                 ctx.fillStyle = 'red';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                console.log('Fallback: Filled canvas with red');
+                drawStaticGrid();
+                console.log('Fallback: Filled canvas with red and drew static grid');
             }
         }
 
@@ -645,7 +642,7 @@
                         testSound();
                     }).catch(err => {
                         console.error('AudioContext resume failed:', err);
-                        alert('Failed to start audio. Please try tapping a pad or refreshing the page.');
+                        alert('Failed to start audio. Try tapping a pad or refreshing.');
                     });
                 } else {
                     console.log('AudioContext state:', audioContext.state);
@@ -716,25 +713,25 @@
                         gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 3.0);
                         break;
                     case 'drone-loop1':
-                        oscillator.type = document.getElementById('synth-type').value;
+                        oscillator.type = 'sawtooth';
                         oscillator.frequency.setValueAtTime(65.41, audioContext.currentTime);
                         oscillator.frequency.exponentialRampToValueAtTime(130.81, audioContext.currentTime + 4.0);
                         gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
                         break;
                     case 'drone-loop2':
-                        oscillator.type = document.getElementById('synth-type').value;
+                        oscillator.type = 'sine';
                         oscillator.frequency.setValueAtTime(87.31, audioContext.currentTime);
                         oscillator.frequency.exponentialRampToValueAtTime(174.61, audioContext.currentTime + 5.0);
                         gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
                         break;
                     case 'drone-loop3':
-                        oscillator.type = document.getElementById('synth-type').value;
+                        oscillator.type = 'triangle';
                         oscillator.frequency.setValueAtTime(98.00, audioContext.currentTime);
                         oscillator.frequency.exponentialRampToValueAtTime(196.00, audioContext.currentTime + 3.0);
                         gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
                         break;
                     case 'drone-loop4':
-                        oscillator.type = document.getElementById('synth-type').value;
+                        oscillator.type = 'square';
                         oscillator.frequency.setValueAtTime(116.54, audioContext.currentTime);
                         oscillator.frequency.exponentialRampToValueAtTime(233.08, audioContext.currentTime + 6.0);
                         gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
@@ -801,13 +798,10 @@
             pad.addEventListener('touchend', (e) => e.preventDefault());
         });
 
-        const autoplayButton = document.getElementById('autoplay');
-        const arpToggleButton = document.getElementById('arp-toggle');
-        const arpSpeedSelect = document.getElementById('arp-speed');
-        const arpModeSelect = document.getElementById('arp-mode');
-        const songSelect = document.getElementById('song-select');
-        const bpm = 40 + Math.floor(Math.random() * 40);
-        const beat = 60 / bpm * 1000;
+        const autoGenButton = document.getElementById('auto-gen');
+        const tempoControl = document.getElementById('tempo');
+        let bpm = parseInt(tempoControl.value);
+        let beat = 60 / bpm * 1000;
         const barLength = beat * 8;
         const drumTypes = [
             'ghost-chime', 'distant-rattle', 'drip-drone', 'crypt-creak',
@@ -815,105 +809,60 @@
             'drone-loop2', 'drone-loop3', 'drone-loop4'
         ];
 
-        const aMinorScale = [
-            65.41, 73.42, 77.78, 87.31, 98.00, 103.83, 116.54,
-            130.81, 138.59, 155.56, 174.61, 196.00, 207.65, 233.08
-        ];
-
-        function playSynth(frequency) {
-            try {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                oscillator.connect(gainNode);
-                gainNode.connect(reverb);
-                reverb.connect(gainNodeMaster);
-
-                oscillator.type = document.getElementById('synth-type').value;
-                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-                gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 3.0);
-
-                oscillator.start();
-                oscillator.stop(audioContext.currentTime + 3.0);
-                console.log(`Synth played: ${frequency}Hz`);
-            } catch (err) {
-                console.error(`Failed to play synth at ${frequency}Hz:`, err);
-            }
-        }
-
-        function generateRandomDrumPattern(song) {
-            const drumPattern = [];
+        function generateDronePattern() {
+            const pattern = [];
             const steps = 16;
-            const density = song === 'dungeon' ? 0.3 : song === 'crypt' ? 0.2 : 0.4;
-            for (let i = 0; i < steps; i++) {
-                if (Math.random() > density) {
-                    const drum = drumTypes[Math.floor(Math.random() * drumTypes.length)];
-                    drumPattern.push({ note: drum, time: i * (beat / 2) });
+            const bars = 16;
+            for (let bar = 0; bar < bars; bar++) {
+                const density = 0.2 + Math.random() * 0.2;
+                for (let i = 0; i < steps; i++) {
+                    if (Math.random() < density) {
+                        const drum = drumTypes[Math.floor(Math.random() * drumTypes.length)];
+                        pattern.push({ note: drum, time: (bar * steps + i) * (beat / 2) });
+                    }
                 }
             }
-            return drumPattern;
+            return pattern;
         }
 
-        function generateArpPattern(mode) {
-            const noteCount = mode === 'long' ? 12 : 5 + Math.floor(Math.random() * 4);
-            const arpNotes = [];
-            const startIndex = Math.floor(Math.random() * (aMinorScale.length - noteCount));
-            for (let i = 0; i < noteCount; i++) {
-                arpNotes.push(aMinorScale[startIndex + i]);
-            }
-
-            let sequence = [];
-            if (mode === 'up') sequence = [...arpNotes];
-            else if (mode === 'down') sequence = [...arpNotes].reverse();
-            else if (mode === 'up-down') sequence = [...arpNotes, ...[...arpNotes].reverse()];
-            else if (mode === 'random') sequence = [...arpNotes].sort(() => Math.random() - 0.5);
-            else if (mode == 'long') sequence = [...arpNotes];
-
-            return { sequence, mode };
-        }
-
-        let arpPattern = generateArpPattern(arpModeSelect.value);
-        let arpIndex = 0;
-
-        function playBar(drumPattern) {
-            drumPattern.forEach(d => {
-                if (!d.note.startsWith('drone-loop')) {
-                    setTimeout(() => playSound(d.note), d.time);
-                }
+        function playBar(pattern) {
+            pattern.forEach(d => {
+                setTimeout(() => {
+                    if (d.note.startsWith('drone-loop')) {
+                        if (!loopIntervals[d.note]) {
+                            const sound = playSound(d.note, true);
+                            if (sound) {
+                                const { oscillator, gainNode } = sound;
+                                loopIntervals[d.note] = { oscillator, gainNode, interval: null };
+                                document.querySelector(`[data-note="${d.note}"]`).style.background = '#ccc';
+                            }
+                        }
+                    } else {
+                        playSound(d.note);
+                    }
+                }, d.time);
             });
         }
 
-        function playArpNote() {
-            playSynth(arpPattern.sequence[arpIndex]);
-            arpIndex = (arpIndex + 1) % arpPattern.sequence.length;
-        }
-
-        autoplayButton.addEventListener('click', () => {
+        autoGenButton.addEventListener('click', () => {
             startAudioContext();
             if (!isPlaying) {
                 isPlaying = true;
-                autoplayButton.textContent = 'Stop Descent';
-                const song = songSelect.value;
-                const drumPattern = generateRandomDrumPattern(song);
-                arpPattern = generateArpPattern(arpModeSelect.value);
-                arpIndex = 0;
-                playBar(drumPattern);
-                intervalId = setInterval(() => playBar(drumPattern), barLength);
-
-                if (isArpActive) {
-                    const arpSpeed = parseFloat(arpSpeedSelect.value) * beat;
-                    arpIntervalId = setInterval(playArpNote, arpSpeed);
-                }
-                console.log('Autoplay started');
+                autoGenButton.textContent = 'Stop Gen';
+                bpm = parseInt(tempoControl.value);
+                beat = 60 / bpm * 1000;
+                const pattern = generateDronePattern();
+                playBar(pattern);
+                intervalId = setInterval(() => playBar(pattern), barLength * 16);
+                console.log('Auto Gen started');
             } else {
                 isPlaying = false;
-                autoplayButton.textContent = 'Start Descent';
+                autoGenButton.textContent = 'Auto Gen';
                 clearInterval(intervalId);
-                clearInterval(arpIntervalId);
                 for (const note in loopIntervals) {
                     try {
                         loopIntervals[note].oscillator.stop();
-                        clearInterval(loopIntervals[note].interval);
+                        if (loopIntervals[note].interval) clearInterval(loopIntervals[note].interval);
                         document.querySelector(`[data-note="${note}"]`).style.background = '#1a1a1a';
                     } catch (err) {
                         console.error(`Error stopping loop ${note}:`, err);
@@ -921,63 +870,31 @@
                 }
                 loopIntervals = {};
                 intervalId = null;
-                arpIntervalId = null;
-                console.log('Autoplay stopped');
+                console.log('Auto Gen stopped');
             }
         });
 
-        arpToggleButton.addEventListener('click', () => {
-            startAudioContext();
-            isArpActive = !isArpActive;
-            arpToggleButton.textContent = isArpActive ? 'Arp On' : 'Arp Off';
-            arpToggleButton.classList.toggle('active', isArpActive);
-
-            if (isPlaying) {
-                if (isArpActive && !arpIntervalId) {
-                    const arpSpeed = parseFloat(arpSpeedSelect.value) * beat;
-                    arpIntervalId = setInterval(playArpNote, arpSpeed);
-                    console.log('Arp started');
-                } else if (!isArpActive && arpIntervalId) {
-                    clearInterval(arpIntervalId);
-                    arpIntervalId = null;
-                    console.log('Arp stopped');
-                }
-            }
-        });
-
-        function updateArp() {
-            if (isPlaying && isArpActive) {
-                clearInterval(arpIntervalId);
-                arpPattern = generateArpPattern(arpModeSelect.value);
-                arpIndex = 0;
-                const arpSpeed = parseFloat(arpSpeedSelect.value) * beat;
-                arpIntervalId = setInterval(playArpNote, arpSpeed);
-                console.log('Arp pattern updated');
-            }
-        }
-
-        arpSpeedSelect.addEventListener('change', updateArp);
-        arpModeSelect.addEventListener('change', updateArp);
-        songSelect.addEventListener('change', () => {
+        tempoControl.addEventListener('input', () => {
+            bpm = parseInt(tempoControl.value);
+            beat = 60 / bpm * 1000;
             if (isPlaying) {
                 clearInterval(intervalId);
-                clearInterval(arpIntervalId);
-                const drumPattern = generateRandomDrumPattern(songSelect.value);
-                playBar(drumPattern);
-                intervalId = setInterval(() => playBar(drumPattern), barLength);
-                updateArp();
-                console.log('Song changed');
+                const pattern = generateDronePattern();
+                playBar(pattern);
+                intervalId = setInterval(() => playBar(pattern), barLength * 16);
+                console.log(`Tempo updated: ${bpm} BPM`);
             }
         });
 
-        // Start XY grid rendering immediately
-        try {
-            drawXYGrid();
-            console.log('Initial drawXYGrid called');
-        } catch (err) {
-            console.error('Failed to start XY grid rendering:', err);
-            alert('Failed to render XY grid. Check console for details.');
-        }
+        window.onload = () => {
+            try {
+                drawXYGrid();
+                console.log('Initial drawXYGrid called on window.onload');
+            } catch (err) {
+                console.error('Failed to start XY grid rendering:', err);
+                alert('Failed to render XY grid. Check console for details.');
+            }
+        };
     </script>
 </body>
 </html>
