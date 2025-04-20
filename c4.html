@@ -1,0 +1,188 @@
+class DrumMachine {
+    constructor(masterGain) {
+        this.bpm = 90;
+        this.isPlaying = false;
+        this.masterGain = masterGain;
+        this.pattern = this.generatePattern(); // Generate initial pattern
+        this.step = 0;
+        this.nextStepTime = 0;
+        this.lastPlayClick = 0;
+    }
+
+    generatePattern() {
+        // Define rhythmic styles with probabilities for each drum
+        const styles = [
+            {
+                name: 'Straight', // 4-on-the-floor, steady
+                kickProb: [0.9, 0.1, 0.3, 0.1, 0.8, 0.1, 0.3, 0.1], // Strong on beats 1, 5
+                snareProb: [0.1, 0.1, 0.9, 0.1, 0.1, 0.1, 0.9, 0.1], // Backbeat on 3, 7
+                hihatProb: [0.7, 0.4, 0.7, 0.4, 0.7, 0.4, 0.7, 0.4], // Steady 8th notes
+                clapProb: [0.1, 0.05, 0.2, 0.05, 0.1, 0.05, 0.2, 0.05], // Sparse accents
+                tomProb: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05], // Rare fills
+                rimProb: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1] // Subtle ticks
+            },
+            {
+                name: 'Syncopated', // Off-beat, groovy
+                kickProb: [0.8, 0.2, 0.4, 0.3, 0.7, 0.2, 0.4, 0.3], // Off-beat kicks
+                snareProb: [0.2, 0.3, 0.8, 0.2, 0.2, 0.3, 0.8, 0.2], // Syncopated snares
+                hihatProb: [0.5, 0.6, 0.5, 0.6, 0.5, 0.6, 0.5, 0.6], // Choppy hats
+                clapProb: [0.2, 0.1, 0.3, 0.1, 0.2, 0.1, 0.3, 0.1], // Off-beat claps
+                tomProb: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1], // More frequent toms
+                rimProb: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2] // Active rims
+            },
+            {
+                name: 'Sparse', // Minimal, atmospheric
+                kickProb: [0.7, 0.05, 0.05, 0.05, 0.6, 0.05, 0.05, 0.05], // Sparse kicks
+                snareProb: [0.05, 0.05, 0.7, 0.05, 0.05, 0.05, 0.7, 0.05], // Rare snares
+                hihatProb: [0.3, 0.2, 0.3, 0.2, 0.3, 0.2, 0.3, 0.2], // Open, sparse hats
+                clapProb: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05], // Very rare claps
+                tomProb: [0.1, 0.05, 0.05, 0.05, 0.1, 0.05, 0.05, 0.05], // Occasional toms
+                rimProb: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05] // Minimal rims
+            },
+            {
+                name: 'Busy', // Complex, breakbeat-like
+                kickProb: [0.8, 0.3, 0.5, 0.4, 0.7, 0.3, 0.5, 0.4], // Frequent kicks
+                snareProb: [0.3, 0.4, 0.8, 0.3, 0.3, 0.4, 0.8, 0.3], // Active snares
+                hihatProb: [0.7, 0.6, 0.7, 0.6, 0.7, 0.6, 0.7, 0.6], // Busy hats
+                clapProb: [0.3, 0.2, 0.3, 0.2, 0.3, 0.2, 0.3, 0.2], // Frequent claps
+                tomProb: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], // Active toms
+                rimProb: [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3] // Very active rims
+            }
+        ];
+
+        // Randomly select a style
+        const style = styles[Math.floor(Math.random() * styles.length)];
+        console.log(`Generating pattern: ${style.name}`);
+
+        // Generate 16-step pattern (8 steps doubled for 16-step resolution)
+        const pattern = {
+            name: style.name,
+            kick: new Array(16).fill(0),
+            snare: new Array(16).fill(0),
+            hihat: new Array(16).fill(0),
+            clap: new Array(16).fill(0),
+            tom: new Array(16).fill(0),
+            rim: new Array(16).fill(0)
+        };
+
+        // Fill pattern based on probabilities
+        for (let i = 0; i < 16; i++) {
+            const probIndex = i % 8; // Repeat 8-step probabilities for 16 steps
+            pattern.kick[i] = Math.random() < style.kickProb[probIndex] ? 1 : 0;
+            pattern.snare[i] = Math.random() < style.snareProb[probIndex] ? 1 : 0;
+            pattern.hihat[i] = Math.random() < style.hihatProb[probIndex] ? 1 : 0;
+            pattern.clap[i] = Math.random() < style.clapProb[probIndex] ? 1 : 0;
+            pattern.tom[i] = Math.random() < style.tomProb[probIndex] ? 1 : 0;
+            pattern.rim[i] = Math.random() < style.rimProb[probIndex] ? 1 : 0;
+        }
+
+        // Ensure at least one kick and snare to avoid empty patterns
+        if (!pattern.kick.some(v => v === 1)) pattern.kick[0] = 1;
+        if (!pattern.snare.some(v => v === 1)) pattern.snare[2] = 1;
+
+        return pattern;
+    }
+
+    playDrum(drum) {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        const noise = audioContext.createBufferSource();
+        let source;
+        switch (drum) {
+            case 'kick':
+                osc.frequency.setValueAtTime(150, audioContext.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+                gain.gain.setValueAtTime(1, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+                source = osc;
+                break;
+            case 'snare':
+                noise.buffer = this.createNoiseBuffer();
+                gain.gain.setValueAtTime(0.7, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+                source = noise;
+                break;
+            case 'hihat':
+                noise.buffer = this.createNoiseBuffer();
+                gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
+                source = noise;
+                break;
+            case 'clap':
+                noise.buffer = this.createNoiseBuffer();
+                gain.gain.setValueAtTime(0.5, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
+                source = noise;
+                break;
+            case 'tom':
+                osc.frequency.setValueAtTime(200, audioContext.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.4);
+                gain.gain.setValueAtTime(0.6, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4);
+                source = osc;
+                break;
+            case 'rim':
+                noise.buffer = this.createNoiseBuffer();
+                gain.gain.setValueAtTime(0.4, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                source = noise;
+                break;
+        }
+        source.connect(gain);
+        gain.connect(this.masterGain);
+        source.start();
+        source.stop(audioContext.currentTime + 0.5);
+    }
+
+    createNoiseBuffer() {
+        const bufferSize = audioContext.sampleRate * 0.5;
+        const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        return buffer;
+    }
+
+    start() {
+        if (!this.isPlaying) {
+            this.isPlaying = true;
+            this.step = 0;
+            this.nextStepTime = audioContext.currentTime;
+            this.pattern = this.generatePattern(); // Generate new pattern on play
+            this.schedule();
+        }
+    }
+
+    stop() {
+        this.isPlaying = false;
+    }
+
+    schedule() {
+        if (!this.isPlaying) return;
+        while (this.nextStepTime < audioContext.currentTime + 0.1) {
+            if (this.pattern.kick[this.step]) this.playDrum('kick');
+            if (this.pattern.snare[this.step]) this.playDrum('snare');
+            if (this.pattern.hihat[this.step]) this.playDrum('hihat');
+            if (this.pattern.clap[this.step]) this.playDrum('clap');
+            if (this.pattern.tom[this.step]) this.playDrum('tom');
+            if (this.pattern.rim[this.step]) this.playDrum('rim');
+            const beatDuration = 60 / this.bpm / 4;
+            this.nextStepTime += beatDuration;
+            this.step = (this.step + 1) % 16;
+        }
+        requestAnimationFrame(() => this.schedule());
+    }
+
+    setTempo(bpm) {
+        this.bpm = bpm;
+    }
+
+    nextPattern() {
+        this.pattern = this.generatePattern(); // Generate new pattern on double-click
+        if (this.isPlaying) {
+            this.step = 0;
+            this.nextStepTime = audioContext.currentTime;
+        }
+    }
+}
