@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Mythical Synth - Dungeon Symphony: Create immersive dungeon synth music with an arcade RPG-style interface. Features celestial keys, ancient percussion, arpeggiators, and ambient dungeon sounds for musicians and producers.">
+    <meta name="keywords" content="dungeon synth, music production, synthesizer, arcade synth, RPG music, ambient music, electronic music, sound design, 2025 synth, mythical synth, celestial keys, ancient percussion">
+    <meta name="author" content="Sound Synths">
+    <meta name="robots" content="index, follow">
+    <meta name="application-name" content="Mythical Synth - Dungeon Symphony">
+    <meta property="og:title" content="Mythical Synth - Dungeon Symphony">
+    <meta property="og:description" content="Craft epic dungeon synth tracks with an arcade-style interface, featuring celestial keys, ambient dungeon sounds, and advanced controls for music production.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://mythicalsynth.example.com">
+    <meta property="og:image" content="https://mythicalsynth.example.com/images/synth-logo.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Mythical Synth - Dungeon Symphony">
+    <meta name="twitter:description" content="A dungeon synth music creation tool with an arcade RPG vibe, perfect for ambient and electronic music producers.">
+    <meta name="twitter:image" content="https://mythicalsynth.example.com/images/synth-logo.jpg">
+    <title>Mythical Synth - Dungeon Symphony</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Press Start 2P', monospace;
+            background: linear-gradient(to bottom, #0d0d1a, #1c2526);
+            color: #e6e6fa;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            overflow: hidden;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        header {
+            padding: 10px;
+            text-align: center;
+        }
+        h1 {
+            font-size: clamp(18px, 4.5vw, 22px);
+            text-shadow: 
+                0 0 8px #00ffcc, 
+                0 0 12px #ff00ff, 
+                2px 2px 0 #00ffcc, 
+                -2px -2px 0 #ff00ff;
+            letter-spacing: 3px;
+            transform: perspective(500px) translateZ(10px);
+            color: #e6e6fa;
+        }
+        .drum-rack, .synth-keys-container, .controls {
+            background: linear-gradient(145deg, #1a1a2e, #2e2e47);
+            border: 2px solid #00ffcc;
+            border-radius: 8px;
+            padding: 10px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 0 15px #00ffcc, inset 0 0 8px #ff00ff;
+        }
+        .drum-rack h2, .synth-keys-container h2, .controls h2 {
+            font-size: clamp(10px, 2.5vw, 14px);
+            margin: 0 0 8px 0;
+            color: #ff00ff;
+            text-shadow: 0 0 5px #00ffcc;
+        }
+        .drum-pads {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 6px;
+            padding: 5px;
+        }
+        .drum-pad {
+            aspect-ratio: 1;
+            background: linear-gradient(145deg, #4a4e69, #2e2e47);
+            color: #e6e6fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid #00ffcc;
+            border-radius: 5px;
+            font-size: clamp(8px, 2vw, 10px);
+            text-shadow: 0 0 3px #ff00ff;
+            transition: transform 0.1s, box-shadow 0.1s;
+            touch-action: manipulation;
+        }
+        .drum-pad:hover, .drum-pad:focus {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px #00ffcc;
+        }
+        .drum-pad:active {
+            transform: scale(0.95);
+            background: #ff00ff;
+        }
+        .synth-keys-container {
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        .synth-keys {
+            display: flex;
+            height: 100px;
+            min-width: fit-content;
+        }
+        .key {
+            flex: 0 0 28px;
+            height: 100%;
+            border: 1px solid #00ffcc;
+            cursor: pointer;
+            transition: background 0.1s;
+            touch-action: manipulation;
+        }
+        .white {
+            background: linear-gradient(#e6e6fa, #b0b0cc);
+        }
+        .black {
+            flex: 0 0 16px;
+            height: 60px;
+            background: linear-gradient(#2e2e47, #1a1a2e);
+            margin: 0 -8px;
+            position: relative;
+            z-index: 1;
+        }
+        .key:hover, .key:focus {
+            background: #00ffcc;
+        }
+        .key:active {
+            background: #ff00ff;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 10px;
+        }
+        button, select, input[type="range"] {
+            padding: 8px;
+            font-size: clamp(10px, 2.5vw, 12px);
+            background: linear-gradient(145deg, #4a4e69, #2e2e47);
+            color: #e6e6fa;
+            border: 2px solid #00ffcc;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            text-shadow: 0 0 3px #ff00ff;
+            touch-action: manipulation;
+        }
+        button:hover, button:focus, select:hover, select:focus, input[type="range"]:hover, input[type="range"]:focus {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px #00ffcc;
+        }
+        #arp-toggle.active {
+            background: #ff00ff;
+            border-color: #00ffcc;
+        }
+        .autoplay-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+        .bpm-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .bpm-selector label {
+            font-size: clamp(10px, 2.5vw, 12px);
+            color: #e6e6fa;
+            text-shadow: 0 0 3px #ff00ff;
+        }
+        .xy-grid {
+            width: 80px;
+            height: 80px;
+            background: #1a1a2e;
+            border: 2px solid #00ffcc;
+            position: relative;
+            cursor: crosshair;
+            touch-action: none;
+        }
+        .xy-cursor {
+            width: 8px;
+            height: 8px;
+            background: #ff00ff;
+            border-radius: 50%;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 5px #00ffcc;
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            padding: 8px;
+            background: linear-gradient(145deg, #1a1a2e, #2e2e47);
+            border-top: 2px solid #00ffcc;
+            color: #e6e6fa;
+            font-size: clamp(8px, 2vw, 10px);
+            text-shadow: 0 0 3px #ff00ff;
+            z-index: 10;
+        }
+        @media (max-width: 600px) {
+            .drum-pads {
+                grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+            }
+            .key {
+                flex: 0 0 24px;
+            }
+            .black {
+                flex: 0 0 14px;
+                margin: 0 -7px;
+            }
+            .synth-keys {
+                height: 80px;
+            }
+            .xy-grid {
+                width: 60px;
+                height: 60px;
+            }
+            h1 {
+                font-size: clamp(16px, 4vw, 18px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Mythical Synth - Dungeon Symphony</h1>
+    </header>
+
+    <div class="drum-rack">
+        <h2>Ancient Percussion</h2>
+        <div class="drum-pads">
+            <div class="drum-pad" data-note="war-drum">War Drum</div>
+            <div class="drum-pad" data-note="gong">Gong</div>
+            <div class="drum-pad" data-note="chime">Chime</div>
+            <div class="drum-pad" data-note="rattle">Rattle</div>
+            <div class="drum-pad" data-note="deep-bell">Deep Bell</div>
+            <div class="drum-pad" data-note="chain">Chain</div>
+            <div class="drum-pad" data-note="scream">Scream</div>
+            <div class="drum-pad" data-note="rumble">Rumble</div>
+        </div>
+    </div>
+
+    <div class="synth-keys-container">
+        <h2>Celestial Keys (C3-C5)</h2>
+        <select id="keyboard-type">
+            <option value="organ">Organ</option>
+            <option value="harpsichord">Harpsichord</option>
+            <option value="choir">Choir</option>
+            <option value="strings">Strings</option>
+            <option value="bell">Bell</option>
+        </select>
+        <div class="synth-keys" id="synth-keys">
+            <!-- Keys populated by JavaScript -->
+        </div>
+    </div>
+
+    <div class="controls">
+        <h2>Controls</h2>
+        <div class="autoplay-controls">
+            <button id="autoplay">Start Symphony</button>
+            <button id="arp-toggle">Arp Off</button>
+            <select id="arp-speed">
+                <option value="0.125">Very Fast</option>
+                <option value="0.25">Swift</option>
+                <option value="0.5" selected>Moderate</option>
+                <option value="1">Solemn</option>
+                <option value="2">Very Slow</option>
+            </select>
+            <select id="arp-mode">
+                <option value="up">Up</option>
+                <option value="down">Down</option>
+                <option value="up-down">Up-Down</option>
+                <option value="random">Random</option>
+                <option value="long">Long Sequence</option>
+            </select>
+            <select id="song-select">
+                <option value="dungeon">Dungeon Depths</option>
+                <option value="crypt">Crypt Whispers</option>
+                <option value="forest">Enchanted Forest</option>
+            </select>
+            <div class="bpm-selector">
+                <label for="bpm">BPM: <span id="bpm-value">80</span></label>
+                <input type="range" id="bpm" min="40" max="160" value="80">
+            </div>
+            <div class="xy-grid" id="xy-grid">
+                <div class="xy-cursor" id="xy-cursor"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2025 Sound Synths. All rights reserved.
+    </footer>
+
+    <script>
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const reverb = audioContext.createConvolver();
+        const gainNodeMaster = audioContext.createGain();
+        const compressor = audioContext.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-24, audioContext.currentTime);
+        compressor.knee.setValueAtTime(40, audioContext.currentTime);
+        compressor.ratio.setValueAtTime(12, audioContext.currentTime);
+        compressor.attack.setValueAtTime(0, audioContext.currentTime);
+        compressor.release.setValueAtTime(0.25, audioContext.currentTime);
+        gainNodeMaster.gain.setValueAtTime(0.8, audioContext.currentTime);
+        gainNodeMaster.connect(compressor);
+        compressor.connect(audioContext.destination);
+        let isPlaying = false;
+        let isArpActive = false;
+        let intervalId = null;
+        let arpIntervalId = null;
+        let currentBPM = 80;
+
+        // Reverb Setup
+        function setupReverb() {
+            const impulse = audioContext.createBuffer(2, audioContext.sampleRate * 2, audioContext.sampleRate);
+            for (let channel = 0; channel < 2; channel++) {
+                const channelData = impulse.getChannelData(channel);
+                for (let i = 0; i < channelData.length; i++) {
+                    channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / channelData.length, 3);
+                }
+            }
+            reverb.buffer = impulse;
+        }
+        setupReverb();
+
+        // Drum Sounds (Louder, Distinct)
+        function playDrum(note) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(reverb);
+            reverb.connect(gainNodeMaster);
+
+            switch (note) {
+                case 'war-drum':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(100, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
+                    gainNode.gain.setValueAtTime(1.2, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
+                    break;
+                case 'gong':
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.2);
+                    break;
+                case 'chime':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.6);
+                    break;
+                case 'rattle':
+                    oscillator.type = 'square';
+                    oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.6, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+                    break;
+                case 'deep-bell':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(80, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.5);
+                    break;
+                case 'chain':
+                    oscillator.type = 'square';
+                    oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.4);
+                    gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4);
+                    break;
+                case 'scream':
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(1200, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.7);
+                    gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.7);
+                    break;
+                case 'rumble':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(60, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(1.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.0);
+                    break;
+            }
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 1.5);
+        }
+
+        // Synth Sounds
+        function playSynth(frequency, type) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(reverb);
+            reverb.connect(gainNodeMaster);
+
+            switch (type) {
+                case 'organ':
+                    oscillator.type = 'sawtooth';
+                    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+                    break;
+                case 'harpsichord':
+                    oscillator.type = 'triangle';
+                    gainNode.gain.setValueAtTime(0.6, audioContext.currentTime);
+                    break;
+                case 'choir':
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+                    break;
+                case 'strings':
+                    oscillator.type = 'sawtooth';
+                    gainNode.gain.setValueAtTime(0.45, audioContext.currentTime);
+                    break;
+                case 'bell':
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
+                    break;
+            }
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.2);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 1.2);
+        }
+
+        // Keyboard Setup (C3-C5)
+        const keys = [
+            { note: 'C3', freq: 130.81, type: 'white' }, { note: 'C#3', freq: 138.59, type: 'black' },
+            { note: 'D3', freq: 146.83, type: 'white' }, { note: 'D#3', freq: 155.56, type: 'black' },
+            { note: 'E3', freq: 164.81, type: 'white' }, { note: 'F3', freq: 174.61, type: 'white' },
+            { note: 'F#3', freq: 185.00, type: 'black' }, { note: 'G3', freq: 196.00, type: 'white' },
+            { note: 'G#3', freq: 207.65, type: 'black' }, { note: 'A3', freq: 220.00, type: 'white' },
+            { note: 'A#3', freq: 233.08, type: 'black' }, { note: 'B3', freq: 246.94, type: 'white' },
+            { note: 'C4', freq: 261.63, type: 'white' }, { note: 'C#4', freq: 277.18, type: 'black' },
+            { note: 'D4', freq: 293.66, type: 'white' }, { note: 'D#4', freq: 311.13, type: 'black' },
+            { note: 'E4', freq: 329.63, type: 'white' }, { note: 'F4', freq: 349.23, type: 'white' },
+            { note: 'F#4', freq: 369.99, type: 'black' }, { note: 'G4', freq: 392.00, type: 'white' },
+            { note: 'G#4', freq: 415.30, type: 'black' }, { note: 'A4', freq: 440.00, type: 'white' },
+            { note: 'A#4', freq: 466.16, type: 'black' }, { note: 'B4', freq: 493.88, type: 'white' },
+            { note: 'C5', freq: 523.25, type: 'white' }
+        ];
+
+        function renderKeyboard() {
+            const synthKeys = document.getElementById('synth-keys');
+            synthKeys.innerHTML = '';
+            keys.forEach(key => {
+                const div = document.createElement('div');
+                div.className = `key ${key.type}`;
+                div.dataset.note = key.freq;
+                div.addEventListener('click', () => playSynth(key.freq, document.getElementById('keyboard-type').value));
+                div.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    playSynth(key.freq, document.getElementById('keyboard-type').value);
+                });
+                synthKeys.appendChild(div);
+            });
+        }
+        renderKeyboard();
+
+        // Manual Play
+        document.querySelectorAll('.drum-pad').forEach(pad => {
+            pad.addEventListener('click', () => playDrum(pad.dataset.note));
+            pad.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                playDrum(pad.dataset.note);
+            });
+        });
+
+        // Autoplay and Arpeggiator
+        const autoplayButton = document.getElementById('autoplay');
+        const arpToggleButton = document.getElementById('arp-toggle');
+        const arpSpeedSelect = document.getElementById('arp-speed');
+        const arpModeSelect = document.getElementById('arp-mode');
+        const songSelect = document.getElementById('song-select');
+        const bpmInput = document.getElementById('bpm');
+        const bpmValue = document.getElementById('bpm-value');
+        const drumTypes = ['war-drum', 'gong', 'chime', 'rattle', 'deep-bell', 'chain', 'scream', 'rumble'];
+
+        // A Minor Scale (C3 to C5 subset)
+        const aMinorScale = [
+            130.81, 146.83, 155.56, 174.61, 196.00, 207.65, 233.08,
+            261.63, 293.66, 311.13, 349.23, 392.00, 415.30, 466.16,
+            523.25
+        ];
+
+        function generateRandomDrumPattern(song) {
+            const drumPattern = [];
+            const steps = 16;
+            const density = song === 'dungeon' ? 0.5 : song === 'crypt' ? 0.4 : 0.6;
+            for (let i = 0; i < steps; i++) {
+                if (Math.random() > density) {
+                    const drum = drumTypes[Math.floor(Math.random() * drumTypes.length)];
+                    drumPattern.push({ note: drum, time: i * (60 / currentBPM * 1000 / 4) });
+                }
+            }
+            return drumPattern;
+        }
+
+        function generateArpPattern(mode) {
+            const noteCount = mode === 'long' ? 12 : 5 + Math.floor(Math.random() * 4);
+            const arpNotes = [];
+            const startIndex = Math.floor(Math.random() * (aMinorScale.length - noteCount));
+            for (let i = 0; i < noteCount; i++) {
+                arpNotes.push(aMinorScale[startIndex + i]);
+            }
+            let sequence = [];
+            if (mode === 'up') sequence = [...arpNotes];
+            else if (mode === 'down') sequence = [...arpNotes].reverse();
+            else if (mode === 'up-down') sequence = [...arpNotes, ...[...arpNotes].reverse()];
+            else if (mode === 'random') sequence = [...arpNotes].sort(() => Math.random() - 0.5);
+            else if (mode === 'long') sequence = [...arpNotes];
+            if (Math.random() > 0.6) {
+                const jumpIndex = Math.floor(Math.random() * sequence.length);
+                sequence[jumpIndex] *= 2;
+            }
+            return { sequence, mode };
+        }
+
+        let arpPattern = generateArpPattern(arpModeSelect.value);
+        let arpIndex = 0;
+
+        function playBar(drumPattern) {
+            drumPattern.forEach(d => setTimeout(() => playDrum(d.note), d.time));
+        }
+
+        function playArpNote() {
+            playSynth(arpPattern.sequence[arpIndex], document.getElementById('keyboard-type').value);
+            arpIndex = (arpIndex + 1) % arpPattern.sequence.length;
+        }
+
+        const songs = {
+            dungeon: { bpm: 80, density: 0.5, arpMode: 'long' },
+            crypt: { bpm: 60, density: 0.4, arpMode: 'random' },
+            forest: { bpm: 100, density: 0.6, arpMode: 'up-down' }
+        };
+
+        autoplayButton.addEventListener('click', () => {
+            if (!isPlaying) {
+                isPlaying = true;
+                autoplayButton.textContent = 'Stop Symphony';
+                const song = songSelect.value;
+                const drumPattern = generateRandomDrumPattern(song);
+                arpPattern = generateArpPattern(arpModeSelect.value);
+                arpIndex = 0;
+                playBar(drumPattern);
+                intervalId = setInterval(() => playBar(drumPattern), 60 / currentBPM * 1000 * 4);
+                if (isArpActive) {
+                    const arpSpeed = parseFloat(arpSpeedSelect.value) * (60 / currentBPM * 1000);
+                    arpIntervalId = setInterval(playArpNote, arpSpeed);
+                }
+            } else {
+                isPlaying = false;
+                autoplayButton.textContent = 'Start Symphony';
+                clearInterval(intervalId);
+                clearInterval(arpIntervalId);
+                intervalId = null;
+                arpIntervalId = null;
+            }
+        });
+
+        arpToggleButton.addEventListener('click', () => {
+            isArpActive = !isArpActive;
+            arpToggleButton.textContent = isArpActive ? 'Arp On' : 'Arp Off';
+            arpToggleButton.classList.toggle('active', isArpActive);
+            if (isPlaying) {
+                if (isArpActive && !arpIntervalId) {
+                    const arpSpeed = parseFloat(arpSpeedSelect.value) * (60 / currentBPM * 1000);
+                    arpIntervalId = setInterval(playArpNote, arpSpeed);
+                } else if (!isArpActive && arpIntervalId) {
+                    clearInterval(arpIntervalId);
+                    arpIntervalId = null;
+                }
+            }
+        });
+
+        function updateArp() {
+            if (isPlaying && isArpActive) {
+                clearInterval(arpIntervalId);
+                arpPattern = generateArpPattern(arpModeSelect.value);
+                arpIndex = 0;
+                const arpSpeed = parseFloat(arpSpeedSelect.value) * (60 / currentBPM * 1000);
+                arpIntervalId = setInterval(playArpNote, arpSpeed);
+            }
+        }
+
+        arpSpeedSelect.addEventListener('change', updateArp);
+        arpModeSelect.addEventListener('change', updateArp);
+        songSelect.addEventListener('change', () => {
+            if (isPlaying) {
+                clearInterval(intervalId);
+                clearInterval(arpIntervalId);
+                const drumPattern = generateRandomDrumPattern(songSelect.value);
+                playBar(drumPattern);
+                intervalId = setInterval(() => playBar(drumPattern), 60 / currentBPM * 1000 * 4);
+                updateArp();
+            }
+        });
+
+        bpmInput.addEventListener('input', () => {
+            currentBPM = parseInt(bpmInput.value);
+            bpmValue.textContent = currentBPM;
+            if (isPlaying) {
+                clearInterval(intervalId);
+                clearInterval(arpIntervalId);
+                const drumPattern = generateRandomDrumPattern(songSelect.value);
+                playBar(drumPattern);
+                intervalId = setInterval(() => playBar(drumPattern), 60 / currentBPM * 1000 * 4);
+                if (isArpActive) {
+                    const arpSpeed = parseFloat(arpSpeedSelect.value) * (60 / currentBPM * 1000);
+                    arpIntervalId = setInterval(playArpNote, arpSpeed);
+                }
+            }
+        });
+
+        // XY Grid (EQ/Volume)
+        const xyGrid = document.getElementById('xy-grid');
+        const xyCursor = document.getElementById('xy-cursor');
+        let isDragging = false;
+
+        function updateXYPosition(x, y) {
+            const rect = xyGrid.getBoundingClientRect();
+            const posX = Math.max(0, Math.min(x - rect.left, rect.width));
+            const posY = Math.max(0, Math.min(y - rect.top, rect.height));
+            xyCursor.style.left = `${posX}px`;
+            xyCursor.style.top = `${posY}px`;
+            // Map to EQ (low-pass filter) and volume
+            const filterFreq = 200 + (posX / rect.width) * 4800; // 200-5000 Hz
+            const volume = 0.2 + (1 - posY / rect.height) * 0.8; // 0.2-1.0
+            gainNodeMaster.gain.setValueAtTime(volume, audioContext.currentTime);
+            // Note: Filter implementation simplified; real EQ would require BiquadFilterNode
+        }
+
+        xyGrid.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            updateXYPosition(e.clientX, e.clientY);
+        });
+        xyGrid.addEventListener('mousemove', (e) => {
+            if (isDragging) updateXYPosition(e.clientX, e.clientY);
+        });
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        xyGrid.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            updateXYPosition(e.touches[0].clientX, e.touches[0].clientY);
+        });
+        xyGrid.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            updateXYPosition(e.touches[0].clientX, e.touches[0].clientY);
+        });
+    </script>
+</body>
+</html>
