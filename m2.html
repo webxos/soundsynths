@@ -139,6 +139,7 @@
             background: #ff00ff;
         }
         .key:active {
+            transform: scale(0.95);
             background: #ff00ff;
         }
         .controls {
@@ -282,10 +283,10 @@
             <h2>Celestial Keys (C1-C7)</h2>
             <select id="keyboard-type">
                 <option value="organ">Organ</option>
-                <option value="harpsichord">Harpsichord</option>
-                <option value="choir">Choir</option>
+                <option value="pluck">Pluck</option>
+                <option value="vox">Vox</option>
                 <option value="strings">Strings</option>
-                <option value="bell">Bell</option>
+                <option value="chime">Chime</option>
             </select>
             <div class="synth-keys" id="synth-keys"></div>
         </div>
@@ -387,8 +388,8 @@
                 case 'gong':
                     oscillator.type = 'triangle';
                     oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
-                    gainNode.gain.setValueAtTime(1.2, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.2);
+                    gainNode.gain.setValueAtTime(1.5, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.0);
                     break;
                 case 'chime':
                     oscillator.type = 'sine';
@@ -406,7 +407,7 @@
                 case 'deep-bell':
                     oscillator.type = 'sine';
                     oscillator.frequency.setValueAtTime(80, audioContext.currentTime);
-                    gainNode.gain.setValueAtTime(1.2, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(1.5, audioContext.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.5);
                     break;
                 case 'chain':
@@ -426,9 +427,9 @@
                 case 'ethereal-pulse':
                     oscillator.type = 'triangle';
                     oscillator.frequency.setValueAtTime(100, audioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(20, audioContext.currentTime + 1.2);
-                    gainNode.gain.setValueAtTime(1.1, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.2);
+                    oscillator.frequency.exponentialRampToValueAtTime(20, audioContext.currentTime + 1.0);
+                    gainNode.gain.setValueAtTime(1.4, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.0);
                     break;
             }
             oscillator.start();
@@ -439,6 +440,8 @@
         function playSynth(frequency, type) {
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
+            let oscillator2 = null;
+
             oscillator.connect(gainNode);
             gainNode.connect(reverb);
             reverb.connect(gainNodeMaster);
@@ -447,28 +450,44 @@
                 case 'organ':
                     oscillator.type = 'sawtooth';
                     gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.2);
                     break;
-                case 'harpsichord':
-                    oscillator.type = 'triangle';
+                case 'pluck':
+                    oscillator.type = 'square';
                     gainNode.gain.setValueAtTime(0.6, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
                     break;
-                case 'choir':
+                case 'vox':
                     oscillator.type = 'sine';
-                    gainNode.gain.setValueAtTime(0.6, audioContext.currentTime);
+                    oscillator2 = audioContext.createOscillator();
+                    oscillator2.type = 'sawtooth';
+                    oscillator2.frequency.setValueAtTime(frequency * 1.01, audioContext.currentTime);
+                    oscillator2.connect(gainNode);
+                    gainNode.gain.setValueAtTime(0.55, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.0);
                     break;
                 case 'strings':
                     oscillator.type = 'sawtooth';
                     gainNode.gain.setValueAtTime(0.45, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.2);
                     break;
-                case 'bell':
+                case 'chime':
                     oscillator.type = 'sine';
-                    gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
+                    oscillator2 = audioContext.createOscillator();
+                    oscillator2.type = 'sine';
+                    oscillator2.frequency.setValueAtTime(frequency * 2, audioContext.currentTime);
+                    oscillator2.connect(gainNode);
+                    gainNode.gain.setValueAtTime(0.65, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
                     break;
             }
             oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.2);
             oscillator.start();
             oscillator.stop(audioContext.currentTime + 1.2);
+            if (oscillator2) {
+                oscillator2.start();
+                oscillator2.stop(audioContext.currentTime + 1.2);
+            }
         }
 
         // Keyboard Setup (C1-C7)
@@ -540,7 +559,7 @@
             'u': 987.77 // B5
         };
 
-        let octaveShift = 0; // 0 = C4 octave, +1 = C5, -1 = C3, etc.
+        let octaveShift = 0;
         const pressedKeys = new Set();
 
         function renderKeyboard() {
