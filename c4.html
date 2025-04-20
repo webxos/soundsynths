@@ -1,188 +1,660 @@
-class DrumMachine {
-    constructor(masterGain) {
-        this.bpm = 90;
-        this.isPlaying = false;
-        this.masterGain = masterGain;
-        this.pattern = this.generatePattern(); // Generate initial pattern
-        this.step = 0;
-        this.nextStepTime = 0;
-        this.lastPlayClick = 0;
-    }
-
-    generatePattern() {
-        // Define rhythmic styles with probabilities for each drum
-        const styles = [
-            {
-                name: 'Straight', // 4-on-the-floor, steady
-                kickProb: [0.9, 0.1, 0.3, 0.1, 0.8, 0.1, 0.3, 0.1], // Strong on beats 1, 5
-                snareProb: [0.1, 0.1, 0.9, 0.1, 0.1, 0.1, 0.9, 0.1], // Backbeat on 3, 7
-                hihatProb: [0.7, 0.4, 0.7, 0.4, 0.7, 0.4, 0.7, 0.4], // Steady 8th notes
-                clapProb: [0.1, 0.05, 0.2, 0.05, 0.1, 0.05, 0.2, 0.05], // Sparse accents
-                tomProb: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05], // Rare fills
-                rimProb: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1] // Subtle ticks
-            },
-            {
-                name: 'Syncopated', // Off-beat, groovy
-                kickProb: [0.8, 0.2, 0.4, 0.3, 0.7, 0.2, 0.4, 0.3], // Off-beat kicks
-                snareProb: [0.2, 0.3, 0.8, 0.2, 0.2, 0.3, 0.8, 0.2], // Syncopated snares
-                hihatProb: [0.5, 0.6, 0.5, 0.6, 0.5, 0.6, 0.5, 0.6], // Choppy hats
-                clapProb: [0.2, 0.1, 0.3, 0.1, 0.2, 0.1, 0.3, 0.1], // Off-beat claps
-                tomProb: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1], // More frequent toms
-                rimProb: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2] // Active rims
-            },
-            {
-                name: 'Sparse', // Minimal, atmospheric
-                kickProb: [0.7, 0.05, 0.05, 0.05, 0.6, 0.05, 0.05, 0.05], // Sparse kicks
-                snareProb: [0.05, 0.05, 0.7, 0.05, 0.05, 0.05, 0.7, 0.05], // Rare snares
-                hihatProb: [0.3, 0.2, 0.3, 0.2, 0.3, 0.2, 0.3, 0.2], // Open, sparse hats
-                clapProb: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05], // Very rare claps
-                tomProb: [0.1, 0.05, 0.05, 0.05, 0.1, 0.05, 0.05, 0.05], // Occasional toms
-                rimProb: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05] // Minimal rims
-            },
-            {
-                name: 'Busy', // Complex, breakbeat-like
-                kickProb: [0.8, 0.3, 0.5, 0.4, 0.7, 0.3, 0.5, 0.4], // Frequent kicks
-                snareProb: [0.3, 0.4, 0.8, 0.3, 0.3, 0.4, 0.8, 0.3], // Active snares
-                hihatProb: [0.7, 0.6, 0.7, 0.6, 0.7, 0.6, 0.7, 0.6], // Busy hats
-                clapProb: [0.3, 0.2, 0.3, 0.2, 0.3, 0.2, 0.3, 0.2], // Frequent claps
-                tomProb: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], // Active toms
-                rimProb: [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3] // Very active rims
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Cloud Synth: A mobile-optimized Akai MPC-inspired synthesizer for ambient and drum music with a 4x4 pad grid and retro LCD controls.">
+    <meta name="keywords" content="cloud synth, akai mpc, synthesizer, ambient music, drum machine, mobile music, electronic music, music production">
+    <meta name="author" content="Cloud Synth Creators">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="Cloud Synth">
+    <meta property="og:description" content="Create ambient and drum tracks with a 4x4 MPC pad grid and simple LCD controls, optimized for mobile.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://cloudsynth.example.com">
+    <meta property="og:image" content="https://cloudsynth.example.com/images/cloud-synth-logo.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Cloud Synth">
+    <meta name="twitter:description" content="A mobile-friendly Akai MPC-style synth with 16 pads for ambient loops and drum hits, controlled via a retro LCD console.">
+    <meta name="twitter:image" content="https://cloudsynth.example.com/images/cloud-synth-logo.jpg">
+    <title>Cloud Synth</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #fff; /* White background */
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+            overflow-y: auto;
+            color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            max-width: 400px;
+            width: 100%;
+            background: #f0f0e8; /* Off-white MPC body */
+            border: 3px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            padding-bottom: 40px; /* Space for footer */
+        }
+        .section {
+            margin-bottom: 10px;
+        }
+        .pads {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            padding: 8px;
+            background: #d8d8c8;
+            border-radius: 6px;
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.2);
+        }
+        .pad {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff; /* White default */
+            color: #000; /* Black text */
+            border: 2px solid #000; /* Basic black border */
+            font-size: clamp(8px, 2vw, 10px);
+            text-align: center;
+            transition: background 0.1s, transform 0.1s, opacity 0.1s;
+            touch-action: none;
+            user-select: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            opacity: 0.8;
+        }
+        .pad.active {
+            transform: scale(0.95);
+            opacity: 1;
+        }
+        .pad.loop-active {
+            opacity: 1; /* Brighter for active loops */
+        }
+        .controls {
+            padding: 8px;
+            background: #000080; /* Blue LCD background */
+            border-radius: 6px;
+            color: #00ff00; /* Green LCD text */
+            font-size: clamp(10px, 2.5vw, 12px);
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+        }
+        button {
+            padding: 6px 10px;
+            font-size: clamp(9px, 2vw, 11px);
+            background: #333;
+            color: #fff;
+            border: 2px solid #00ff00;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: 'Courier New', monospace;
+            touch-action: manipulation;
+            min-width: 60px;
+        }
+        button:hover {
+            background: #555;
+        }
+        input[type="range"] {
+            width: 100%;
+            max-width: 120px;
+            cursor: pointer;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .control-label {
+            font-size: clamp(9px, 2vw, 11px);
+        }
+        .control-value {
+            font-size: clamp(9px, 2vw, 11px);
+        }
+        footer {
+            text-align: center;
+            padding: 8px;
+            color: #000; /* Simple black text */
+            font-size: clamp(8px, 2vw, 10px);
+            font-family: 'Courier New', monospace;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+            margin-top: 10px;
+        }
+        h2 {
+            margin: 8px;
+            font-size: clamp(12px, 3vw, 14px);
+            color: #000;
+            text-align: center;
+        }
+        @media (max-width: 400px) {
+            .container {
+                padding: 8px;
+                border-width: 2px;
+                padding-bottom: 30px; /* Adjusted for smaller screens */
             }
-        ];
+            .pads {
+                gap: 4px;
+                padding: 6px;
+            }
+            .pad {
+                font-size: clamp(7px, 1.8vw, 9px);
+            }
+            .controls {
+                padding: 6px;
+                font-size: clamp(9px, 2vw, 11px);
+            }
+            button {
+                padding: 5px 8px;
+                min-width: 50px;
+            }
+            input[type="range"] {
+                max-width: 100px;
+            }
+            footer {
+                font-size: clamp(7px, 1.8vw, 9px);
+                padding: 6px;
+            }
+            h2 {
+                font-size: clamp(10px, 2.5vw, 12px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="section">
+            <h2>Cloud Synth</h2>
+            <div class="pads" id="pads">
+                <div class="pad" data-type="drum" data-drum="kick">Kick</div>
+                <div class="pad" data-type="drum" data-drum="snare">Snare</div>
+                <div class="pad" data-type="drum" data-drum="hihat">HiHat</div>
+                <div class="pad" data-type="drum" data-drum="clap">Clap</div>
+                <div class="pad" data-type="drum" data-drum="tom">Tom</div>
+                <div class="pad" data-type="drum" data-drum="rim">Rim</div>
+                <div class="pad" data-type="loop" data-loop="0">Crystal</div>
+                <div class="pad" data-type="loop" data-loop="1">Sweep</div>
+                <div class="pad" data-type="loop" data-loop="2">Ethereal</div>
+                <div class="pad" data-type="loop" data-loop="3">Wind</div>
+                <div class="pad" data-type="loop" data-loop="4">Pulse</div>
+                <div class="pad" data-type="loop" data-loop="5">Glass</div>
+                <div class="pad" data-type="loop" data-loop="6">Mist</div>
+                <div class="pad" data-type="loop" data-loop="7">Cosmic</div>
+                <div class="pad" data-type="loop" data-loop="8">Drone</div>
+                <div class="pad" data-type="loop" data-loop="9">Chime</div>
+            </div>
+        </div>
+        <div class="section">
+            <div class="controls">
+                <div class="control-row">
+                    <button id="play">Play</button>
+                    <button id="stop">Stop</button>
+                    <div class="control-group">
+                        <label for="tempo" class="control-label">BPM:</label>
+                        <input type="range" id="tempo" min="60" max="180" value="90">
+                        <span class="control-value" id="tempo-value">90</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="volume" class="control-label">Volume:</label>
+                        <input type="range" id="volume" min="0" max="100" value="70">
+                        <span class="control-value" id="volume-value">70%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer>© 2025 Sound Synths</footer>
+    </div>
 
-        // Randomly select a style
-        const style = styles[Math.floor(Math.random() * styles.length)];
-        console.log(`Generating pattern: ${style.name}`);
+    <script>
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const compressor = audioContext.createDynamicsCompressor();
+        const limiter = audioContext.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-20, audioContext.currentTime);
+        compressor.knee.setValueAtTime(30, audioContext.currentTime);
+        compressor.ratio.setValueAtTime(4, audioContext.currentTime);
+        compressor.attack.setValueAtTime(0.003, audioContext.currentTime);
+        compressor.release.setValueAtTime(0.25, audioContext.currentTime);
+        limiter.threshold.setValueAtTime(-2, audioContext.currentTime);
+        limiter.knee.setValueAtTime(0, audioContext.currentTime);
+        limiter.ratio.setValueAtTime(20, audioContext.currentTime);
+        limiter.attack.setValueAtTime(0.001, audioContext.currentTime);
+        limiter.release.setValueAtTime(0.1, audioContext.currentTime);
+        compressor.connect(limiter);
+        limiter.connect(audioContext.destination);
 
-        // Generate 16-step pattern (8 steps doubled for 16-step resolution)
-        const pattern = {
-            name: style.name,
-            kick: new Array(16).fill(0),
-            snare: new Array(16).fill(0),
-            hihat: new Array(16).fill(0),
-            clap: new Array(16).fill(0),
-            tom: new Array(16).fill(0),
-            rim: new Array(16).fill(0)
+        class AmbientSynth {
+            constructor(masterGain) {
+                this.loops = [];
+                this.notes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 466.16, 523.25, 587.33, 659.25];
+                this.masterGain = masterGain;
+                this.masterGain.gain.value = 0.3 * 0.7; // Initial volume at 70%
+                this.generateLoops();
+            }
+
+            generateLoops() {
+                for (let i = 0; i < 10; i++) {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    const filter = audioContext.createBiquadFilter(); // Add filter for all loops
+                    osc.type = i === 3 ? 'sawtooth' : i === 1 ? 'sawtooth' : i % 2 === 0 ? 'triangle' : 'sine'; // Wind and Sweep use sawtooth for richer harmonics
+                    osc.frequency.setValueAtTime(this.notes[i], audioContext.currentTime);
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(i === 3 ? 800 : i === 1 ? 1000 : 2000, audioContext.currentTime); // Default filter frequencies
+                    filter.Q.setValueAtTime(1, audioContext.currentTime); // Moderate resonance
+                    gain.gain.setValueAtTime(0, audioContext.currentTime);
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.start();
+                    this.loops.push({ osc, filter, gain, active: false });
+                    console.log(`Loop ${i} created: freq=${this.notes[i]} Hz, type=${osc.type}, filter=${filter.frequency.value} Hz`);
+                }
+                // Add filter sweep modulation for Wind and Sweep
+                this.addWindModulation(3); // Wind
+                this.addSweepModulation(1); // Sweep
+            }
+
+            addWindModulation(loopIndex) {
+                const loop = this.loops[loopIndex];
+                const lfo = audioContext.createOscillator();
+                const lfoGain = audioContext.createGain();
+                lfo.type = 'sine';
+                lfo.frequency.setValueAtTime(0.3, audioContext.currentTime); // Slow for airy, wind-like effect
+                lfoGain.gain.setValueAtTime(300, audioContext.currentTime); // Modulate filter frequency ±300 Hz
+                lfo.connect(lfoGain);
+                lfoGain.connect(loop.filter.frequency); // Modulate filter frequency instead of detune
+                lfo.start();
+                loop.lfo = lfo; // Store for cleanup
+                console.log(`Wind filter sweep added for loop ${loopIndex}: LFO freq=0.3 Hz, depth=300 Hz`);
+            }
+
+            addSweepModulation(loopIndex) {
+                const loop = this.loops[loopIndex];
+                const lfo = audioContext.createOscillator();
+                const lfoGain = audioContext.createGain();
+                lfo.type = 'sine';
+                lfo.frequency.setValueAtTime(0.1, audioContext.currentTime); // Very slow for dramatic sweep
+                lfoGain.gain.setValueAtTime(600, audioContext.currentTime); // Wider filter sweep ±600 Hz
+                lfo.connect(lfoGain);
+                lfoGain.connect(loop.filter.frequency); // Modulate filter frequency
+                lfo.start();
+                loop.lfo = lfo; // Store for cleanup
+                console.log(`Sweep filter sweep added for loop ${loopIndex}: LFO freq=0.1 Hz, depth=600 Hz`);
+            }
+
+            toggleLoop(index) {
+                if (index < 0 || index >= this.loops.length) {
+                    console.error(`Invalid loop index: ${index}`);
+                    return;
+                }
+                const loop = this.loops[index];
+                loop.active = !loop.active;
+                console.log(`Toggling loop ${index} (Wind=${index === 3}, Sweep=${index === 1}): active=${loop.active}`);
+                if (loop.active) {
+                    this.fadeIn(loop.gain);
+                } else {
+                    this.fadeOut(loop.gain);
+                }
+            }
+
+            fadeIn(gainNode) {
+                gainNode.gain.cancelScheduledValues(audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.25, audioContext.currentTime + 2); // Slightly higher gain for audibility
+                console.log(`FadeIn: gain ramp to 0.25`);
+            }
+
+            fadeOut(gainNode) {
+                gainNode.gain.cancelScheduledValues(audioContext.currentTime);
+                gainNode.gain.setValueAtTime(gainNode.gain.value, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 2);
+                console.log(`FadeOut: gain ramp to 0`);
+            }
+        }
+
+        class DrumMachine {
+            constructor(masterGain) {
+                this.bpm = 90;
+                this.isPlaying = false;
+                this.masterGain = masterGain;
+                this.pattern = this.generatePattern(); // Generate initial pattern
+                this.step = 0;
+                this.nextStepTime = 0;
+                this.lastPlayClick = 0;
+            }
+
+            generatePattern() {
+                // Define rhythmic styles with probabilities for each drum
+                const styles = [
+                    {
+                        name: 'Straight', // 4-on-the-floor, steady
+                        kickProb: [0.9, 0.1, 0.3, 0.1, 0.8, 0.1, 0.3, 0.1], // Strong on beats 1, 5
+                        snareProb: [0.1, 0.1, 0.9, 0.1, 0.1, 0.1, 0.9, 0.1], // Backbeat on 3, 7
+                        hihatProb: [0.7, 0.4, 0.7, 0.4, 0.7, 0.4, 0.7, 0.4], // Steady 8th notes
+                        clapProb: [0.1, 0.05, 0.2, 0.05, 0.1, 0.05, 0.2, 0.05], // Sparse accents
+                        tomProb: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05], // Rare fills
+                        rimProb: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1] // Subtle ticks
+                    },
+                    {
+                        name: 'Syncopated', // Off-beat, groovy
+                        kickProb: [0.8, 0.2, 0.4, 0.3, 0.7, 0.2, 0.4, 0.3], // Off-beat kicks
+                        snareProb: [0.2, 0.3, 0.8, 0.2, 0.2, 0.3, 0.8, 0.2], // Syncopated snares
+                        hihatProb: [0.5, 0.6, 0.5, 0.6, 0.5, 0.6, 0.5, 0.6], // Choppy hats
+                        clapProb: [0.2, 0.1, 0.3, 0.1, 0.2, 0.1, 0.3, 0.1], // Off-beat claps
+                        tomProb: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1], // More frequent toms
+                        rimProb: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2] // Active rims
+                    },
+                    {
+                        name: 'Sparse', // Minimal, atmospheric
+                        kickProb: [0.7, 0.05, 0.05, 0.05, 0.6, 0.05, 0.05, 0.05], // Sparse kicks
+                        snareProb: [0.05, 0.05, 0.7, 0.05, 0.05, 0.05, 0.7, 0.05], // Rare snares
+                        hihatProb: [0.3, 0.2, 0.3, 0.2, 0.3, 0.2, 0.3, 0.2], // Open, sparse hats
+                        clapProb: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05], // Very rare claps
+                        tomProb: [0.1, 0.05, 0.05, 0.05, 0.1, 0.05, 0.05, 0.05], // Occasional toms
+                        rimProb: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05] // Minimal rims
+                    },
+                    {
+                        name: 'Busy', // Complex, breakbeat-like
+                        kickProb: [0.8, 0.3, 0.5, 0.4, 0.7, 0.3, 0.5, 0.4], // Frequent kicks
+                        snareProb: [0.3, 0.4, 0.8, 0.3, 0.3, 0.4, 0.8, 0.3], // Active snares
+                        hihatProb: [0.7, 0.6, 0.7, 0.6, 0.7, 0.6, 0.7, 0.6], // Busy hats
+                        clapProb: [0.3, 0.2, 0.3, 0.2, 0.3, 0.2, 0.3, 0.2], // Frequent claps
+                        tomProb: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], // Active toms
+                        rimProb: [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3] // Very active rims
+                    }
+                ];
+
+                // Randomly select a style
+                const style = styles[Math.floor(Math.random() * styles.length)];
+                console.log(`Generating pattern: ${style.name}`);
+
+                // Generate 16-step pattern (8 steps doubled for 16-step resolution)
+                const pattern = {
+                    name: style.name,
+                    kick: new Array(16).fill(0),
+                    snare: new Array(16).fill(0),
+                    hihat: new Array(16).fill(0),
+                    clap: new Array(16).fill(0),
+                    tom: new Array(16).fill(0),
+                    rim: new Array(16).fill(0)
+                };
+
+                // Fill pattern based on probabilities
+                for (let i = 0; i < 16; i++) {
+                    const probIndex = i % 8; // Repeat 8-step probabilities for 16 steps
+                    pattern.kick[i] = Math.random() < style.kickProb[probIndex] ? 1 : 0;
+                    pattern.snare[i] = Math.random() < style.snareProb[probIndex] ? 1 : 0;
+                    pattern.hihat[i] = Math.random() < style.hihatProb[probIndex] ? 1 : 0;
+                    pattern.clap[i] = Math.random() < style.clapProb[probIndex] ? 1 : 0;
+                    pattern.tom[i] = Math.random() < style.tomProb[probIndex] ? 1 : 0;
+                    pattern.rim[i] = Math.random() < style.rimProb[probIndex] ? 1 : 0;
+                }
+
+                // Ensure at least one kick and snare to avoid empty patterns
+                if (!pattern.kick.some(v => v === 1)) pattern.kick[0] = 1;
+                if (!pattern.snare.some(v => v === 1)) pattern.snare[2] = 1;
+
+                return pattern;
+            }
+
+            playDrum(drum) {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                const noise = audioContext.createBufferSource();
+                let source;
+                switch (drum) {
+                    case 'kick':
+                        osc.frequency.setValueAtTime(150, audioContext.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+                        gain.gain.setValueAtTime(1, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+                        source = osc;
+                        break;
+                    case 'snare':
+                        noise.buffer = this.createNoiseBuffer();
+                        gain.gain.setValueAtTime(0.7, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+                        source = noise;
+                        break;
+                    case 'hihat':
+                        noise.buffer = this.createNoiseBuffer();
+                        gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
+                        source = noise;
+                        break;
+                    case 'clap':
+                        noise.buffer = this.createNoiseBuffer();
+                        gain.gain.setValueAtTime(0.5, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
+                        source = noise;
+                        break;
+                    case 'tom':
+                        osc.frequency.setValueAtTime(200, audioContext.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.4);
+                        gain.gain.setValueAtTime(0.6, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4);
+                        source = osc;
+                        break;
+                    case 'rim':
+                        noise.buffer = this.createNoiseBuffer();
+                        gain.gain.setValueAtTime(0.4, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                        source = noise;
+                        break;
+                }
+                source.connect(gain);
+                gain.connect(this.masterGain);
+                source.start();
+                source.stop(audioContext.currentTime + 0.5);
+            }
+
+            createNoiseBuffer() {
+                const bufferSize = audioContext.sampleRate * 0.5;
+                const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                return buffer;
+            }
+
+            start() {
+                if (!this.isPlaying) {
+                    this.isPlaying = true;
+                    this.step = 0;
+                    this.nextStepTime = audioContext.currentTime;
+                    this.pattern = this.generatePattern(); // Generate new pattern on play
+                    this.schedule();
+                }
+            }
+
+            stop() {
+                this.isPlaying = false;
+            }
+
+            schedule() {
+                if (!this.isPlaying) return;
+                while (this.nextStepTime < audioContext.currentTime + 0.1) {
+                    if (this.pattern.kick[this.step]) this.playDrum('kick');
+                    if (this.pattern.snare[this.step]) this.playDrum('snare');
+                    if (this.pattern.hihat[this.step]) this.playDrum('hihat');
+                    if (this.pattern.clap[this.step]) this.playDrum('clap');
+                    if (this.pattern.tom[this.step]) this.playDrum('tom');
+                    if (this.pattern.rim[this.step]) this.playDrum('rim');
+                    const beatDuration = 60 / this.bpm / 4;
+                    this.nextStepTime += beatDuration;
+                    this.step = (this.step + 1) % 16;
+                }
+                requestAnimationFrame(() => this.schedule());
+            }
+
+            setTempo(bpm) {
+                this.bpm = bpm;
+            }
+
+            nextPattern() {
+                this.pattern = this.generatePattern(); // Generate new pattern on double-click
+                if (this.isPlaying) {
+                    this.step = 0;
+                    this.nextStepTime = audioContext.currentTime;
+                }
+            }
+        }
+
+        // Initialize
+        const masterGain = audioContext.createGain();
+        masterGain.connect(compressor);
+        const synth = new AmbientSynth(masterGain);
+        const drumMachine = new DrumMachine(masterGain);
+        const pads = document.querySelectorAll('#pads .pad');
+        const playButton = document.getElementById('play');
+        const stopButton = document.getElementById('stop');
+        const tempoInput = document.getElementById('tempo');
+        const tempoValue = document.getElementById('tempo-value');
+        const volumeInput = document.getElementById('volume');
+        const volumeValue = document.getElementById('volume-value');
+
+        // Pad Colors
+        const padColors = Array.from({ length: 16 }, (_, i) => `hsl(${i * 22.5}, 70%, 50%)`);
+
+        // Keyboard Mapping
+        const keyMap = {
+            'q': { type: 'drum', value: 'kick' },
+            'w': { type: 'drum', value: 'snare' },
+            'e': { type: 'drum', value: 'hihat' },
+            'r': { type: 'drum', value: 'clap' },
+            't': { type: 'drum', value: 'tom' },
+            'y': { type: 'drum', value: 'rim' },
+            'a': { type: 'loop', value: '0' },
+            's': { type: 'loop', value: '1' },
+            'd': { type: 'loop', value: '2' },
+            'f': { type: 'loop', value: '3' },
+            'g': { type: 'loop', value: '4' },
+            'h': { type: 'loop', value: '5' },
+            'j': { type: 'loop', value: '6' },
+            'k': { type: 'loop', value: '7' },
+            'l': { type: 'loop', value: '8' },
+            ';': { type: 'loop', value: '9' }
         };
 
-        // Fill pattern based on probabilities
-        for (let i = 0; i < 16; i++) {
-            const probIndex = i % 8; // Repeat 8-step probabilities for 16 steps
-            pattern.kick[i] = Math.random() < style.kickProb[probIndex] ? 1 : 0;
-            pattern.snare[i] = Math.random() < style.snareProb[probIndex] ? 1 : 0;
-            pattern.hihat[i] = Math.random() < style.hihatProb[probIndex] ? 1 : 0;
-            pattern.clap[i] = Math.random() < style.clapProb[probIndex] ? 1 : 0;
-            pattern.tom[i] = Math.random() < style.tomProb[probIndex] ? 1 : 0;
-            pattern.rim[i] = Math.random() < style.rimProb[probIndex] ? 1 : 0;
-        }
+        // Pad Interactions with Debouncing
+        const debounce = (func, wait) => {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func(...args), wait);
+            };
+        };
 
-        // Ensure at least one kick and snare to avoid empty patterns
-        if (!pattern.kick.some(v => v === 1)) pattern.kick[0] = 1;
-        if (!pattern.snare.some(v => v === 1)) pattern.snare[2] = 1;
+        pads.forEach((pad, i) => {
+            const handlePad = debounce(() => {
+                pad.classList.add('active');
+                if (pad.dataset.type === 'drum') {
+                    // Drum pads: Flash color for 100ms
+                    pad.style.background = padColors[i];
+                    setTimeout(() => {
+                        pad.classList.remove('active');
+                        pad.style.background = '#fff';
+                    }, 100);
+                    drumMachine.playDrum(pad.dataset.drum);
+                } else {
+                    // Synth pads: Toggle color based on active state
+                    const index = parseInt(pad.dataset.loop);
+                    synth.toggleLoop(index);
+                    if (synth.loops[index].active) {
+                        pad.style.background = padColors[i];
+                        pad.classList.add('loop-active');
+                    } else {
+                        pad.style.background = '#fff';
+                        pad.classList.remove('loop-active');
+                    }
+                    pad.style.opacity = synth.loops[index].active ? '1' : '0.8';
+                    setTimeout(() => pad.classList.remove('active'), 100);
+                }
+            }, 50);
 
-        return pattern;
-    }
+            pad.addEventListener('click', handlePad);
+            pad.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handlePad();
+            });
+        });
 
-    playDrum(drum) {
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        const noise = audioContext.createBufferSource();
-        let source;
-        switch (drum) {
-            case 'kick':
-                osc.frequency.setValueAtTime(150, audioContext.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
-                gain.gain.setValueAtTime(1, audioContext.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
-                source = osc;
-                break;
-            case 'snare':
-                noise.buffer = this.createNoiseBuffer();
-                gain.gain.setValueAtTime(0.7, audioContext.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
-                source = noise;
-                break;
-            case 'hihat':
-                noise.buffer = this.createNoiseBuffer();
-                gain.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
-                source = noise;
-                break;
-            case 'clap':
-                noise.buffer = this.createNoiseBuffer();
-                gain.gain.setValueAtTime(0.5, audioContext.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
-                source = noise;
-                break;
-            case 'tom':
-                osc.frequency.setValueAtTime(200, audioContext.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.4);
-                gain.gain.setValueAtTime(0.6, audioContext.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4);
-                source = osc;
-                break;
-            case 'rim':
-                noise.buffer = this.createNoiseBuffer();
-                gain.gain.setValueAtTime(0.4, audioContext.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
-                source = noise;
-                break;
-        }
-        source.connect(gain);
-        gain.connect(this.masterGain);
-        source.start();
-        source.stop(audioContext.currentTime + 0.5);
-    }
+        // Keyboard Input
+        document.addEventListener('keydown', (e) => {
+            const key = keyMap[e.key.toLowerCase()];
+            if (!key || e.repeat) return;
+            const pad = Array.from(pads).find(p => p.dataset.type === key.type && (p.dataset[key.type] === key.value));
+            if (pad) {
+                pad.click();
+            }
+        });
 
-    createNoiseBuffer() {
-        const bufferSize = audioContext.sampleRate * 0.5;
-        const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
-        }
-        return buffer;
-    }
+        // Drum Controls
+        playButton.addEventListener('click', () => {
+            const now = Date.now();
+            if (now - drumMachine.lastPlayClick < 300) {
+                drumMachine.nextPattern();
+            }
+            drumMachine.lastPlayClick = now;
+            drumMachine.start();
+        });
 
-    start() {
-        if (!this.isPlaying) {
-            this.isPlaying = true;
-            this.step = 0;
-            this.nextStepTime = audioContext.currentTime;
-            this.pattern = this.generatePattern(); // Generate new pattern on play
-            this.schedule();
-        }
-    }
+        stopButton.addEventListener('click', () => {
+            drumMachine.stop();
+        });
 
-    stop() {
-        this.isPlaying = false;
-    }
+        tempoInput.addEventListener('input', (e) => {
+            drumMachine.setTempo(e.target.value);
+            tempoValue.textContent = `${e.target.value}`;
+        });
 
-    schedule() {
-        if (!this.isPlaying) return;
-        while (this.nextStepTime < audioContext.currentTime + 0.1) {
-            if (this.pattern.kick[this.step]) this.playDrum('kick');
-            if (this.pattern.snare[this.step]) this.playDrum('snare');
-            if (this.pattern.hihat[this.step]) this.playDrum('hihat');
-            if (this.pattern.clap[this.step]) this.playDrum('clap');
-            if (this.pattern.tom[this.step]) this.playDrum('tom');
-            if (this.pattern.rim[this.step]) this.playDrum('rim');
-            const beatDuration = 60 / this.bpm / 4;
-            this.nextStepTime += beatDuration;
-            this.step = (this.step + 1) % 16;
-        }
-        requestAnimationFrame(() => this.schedule());
-    }
+        volumeInput.addEventListener('input', (e) => {
+            const volume = e.target.value / 100;
+            masterGain.gain.setValueAtTime(0.3 * volume, audioContext.currentTime);
+            volumeValue.textContent = `${e.target.value}%`;
+        });
 
-    setTempo(bpm) {
-        this.bpm = bpm;
-    }
+        // Resume Audio Context
+        document.body.addEventListener('touchstart', () => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }, { once: true });
 
-    nextPattern() {
-        this.pattern = this.generatePattern(); // Generate new pattern on double-click
-        if (this.isPlaying) {
-            this.step = 0;
-            this.nextStepTime = audioContext.currentTime;
-        }
-    }
-}
+        // Resume on Click for Desktop
+        document.body.addEventListener('click', () => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }, { once: true });
+    </script>
+</body>
+</html>
