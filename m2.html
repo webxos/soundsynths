@@ -322,14 +322,21 @@
         const reverb = audioContext.createConvolver();
         const gainNodeMaster = audioContext.createGain();
         const compressor = audioContext.createDynamicsCompressor();
-        compressor.threshold.setValueAtTime(-24, audioContext.currentTime);
+        const limiter = audioContext.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-30, audioContext.currentTime);
         compressor.knee.setValueAtTime(40, audioContext.currentTime);
-        compressor.ratio.setValueAtTime(12, audioContext.currentTime);
+        compressor.ratio.setValueAtTime(15, audioContext.currentTime);
         compressor.attack.setValueAtTime(0, audioContext.currentTime);
         compressor.release.setValueAtTime(0.25, audioContext.currentTime);
-        gainNodeMaster.gain.setValueAtTime(0.8, audioContext.currentTime);
+        limiter.threshold.setValueAtTime(-0.1, audioContext.currentTime);
+        limiter.knee.setValueAtTime(0, audioContext.currentTime);
+        limiter.ratio.setValueAtTime(20, audioContext.currentTime);
+        limiter.attack.setValueAtTime(0, audioContext.currentTime);
+        limiter.release.setValueAtTime(0.1, audioContext.currentTime);
+        gainNodeMaster.gain.setValueAtTime(0.7, audioContext.currentTime);
         gainNodeMaster.connect(compressor);
-        compressor.connect(audioContext.destination);
+        compressor.connect(limiter);
+        limiter.connect(audioContext.destination);
         let isPlaying = false;
         let isArpActive = false;
         let intervalId = null;
@@ -368,7 +375,7 @@
                 case 'gong':
                     oscillator.type = 'triangle';
                     oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
-                    gainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(1.2, audioContext.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.2);
                     break;
                 case 'chime':
@@ -387,7 +394,7 @@
                 case 'deep-bell':
                     oscillator.type = 'sine';
                     oscillator.frequency.setValueAtTime(80, audioContext.currentTime);
-                    gainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(1.2, audioContext.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.5);
                     break;
                 case 'chain':
@@ -408,7 +415,7 @@
                     oscillator.type = 'triangle';
                     oscillator.frequency.setValueAtTime(100, audioContext.currentTime);
                     oscillator.frequency.exponentialRampToValueAtTime(20, audioContext.currentTime + 1.2);
-                    gainNode.gain.setValueAtTime(0.9, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(1.1, audioContext.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.2);
                     break;
             }
@@ -435,7 +442,7 @@
                     break;
                 case 'choir':
                     oscillator.type = 'sine';
-                    gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.6, audioContext.currentTime);
                     break;
                 case 'strings':
                     oscillator.type = 'sawtooth';
@@ -641,7 +648,7 @@
             }
         });
 
-        // XY Grid (EQ/Volume)
+        // XY Grid (Volume Control)
         const xyGrid = document.getElementById('xy-grid');
         const xyCursor = document.getElementById('xy-cursor');
         let isDragging = false;
