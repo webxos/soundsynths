@@ -262,19 +262,56 @@
                 for (let i = 0; i < 10; i++) {
                     const osc = audioContext.createOscillator();
                     const gain = audioContext.createGain();
-                    osc.type = i % 2 === 0 ? 'triangle' : 'sine';
-                    osc.frequency.value = this.notes[i];
-                    gain.gain.value = 0;
+                    osc.type = i === 3 ? 'sine' : i === 1 ? 'sine' : i % 2 === 0 ? 'triangle' : 'sine'; // Wind and Sweep use sine
+                    osc.frequency.setValueAtTime(this.notes[i], audioContext.currentTime);
+                    gain.gain.setValueAtTime(0, audioContext.currentTime);
                     osc.connect(gain);
                     gain.connect(this.masterGain);
                     osc.start();
                     this.loops.push({ osc, gain, active: false });
+                    console.log(`Loop ${i} created: freq=${this.notes[i]} Hz, type=${osc.type}`); // Debug
                 }
+                // Add modulation for Wind and Sweep
+                this.addWindModulation(3); // Wind
+                this.addSweepModulation(1); // Sweep
+            }
+
+            addWindModulation(loopIndex) {
+                const loop = this.loops[loopIndex];
+                const lfo = audioContext.createOscillator();
+                const lfoGain = audioContext.createGain();
+                lfo.type = 'sine';
+                lfo.frequency.setValueAtTime(0.5, audioContext.currentTime); // Slow modulation for airy effect
+                lfoGain.gain.setValueAtTime(10, audioContext.currentTime); // Subtle detune
+                lfo.connect(lfoGain);
+                lfoGain.connect(loop.osc.detune);
+                lfo.start();
+                loop.lfo = lfo; // Store for cleanup if needed
+                console.log(`Wind modulation added for loop ${loopIndex}`);
+            }
+
+            addSweepModulation(loopIndex) {
+                const loop = this.loops[loopIndex];
+                const lfo = audioContext.createOscillator();
+                const lfoGain = audioContext.createGain();
+                lfo.type = 'sine';
+                lfo.frequency.setValueAtTime(0.2, audioContext.currentTime); // Very slow for sweeping effect
+                lfoGain.gain.setValueAtTime(20, audioContext.currentTime); // Wider detune for sweep
+                lfo.connect(lfoGain);
+                lfoGain.connect(loop.osc.detune);
+                lfo.start();
+                loop.lfo = lfo; // Store for cleanup
+                console.log(`Sweep modulation added for loop ${loopIndex}`);
             }
 
             toggleLoop(index) {
+                if (index < 0 || index >= this.loops.length) {
+                    console.error(`Invalid loop index: ${index}`);
+                    return;
+                }
                 const loop = this.loops[index];
                 loop.active = !loop.active;
+                console.log(`Toggling loop ${index} (Wind=${index === 3}, Sweep=${index === 1}): active=${loop.active}`);
                 if (loop.active) {
                     this.fadeIn(loop.gain);
                 } else {
@@ -286,12 +323,14 @@
                 gainNode.gain.cancelScheduledValues(audioContext.currentTime);
                 gainNode.gain.setValueAtTime(0, audioContext.currentTime);
                 gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 2);
+                console.log(`FadeIn: gain ramp to 0.2`);
             }
 
             fadeOut(gainNode) {
                 gainNode.gain.cancelScheduledValues(audioContext.currentTime);
                 gainNode.gain.setValueAtTime(gainNode.gain.value, audioContext.currentTime);
                 gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 2);
+                console.log(`FadeOut: gain ramp to 0`);
             }
         }
 
