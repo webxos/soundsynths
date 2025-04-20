@@ -1,1 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Drone Synth: Create unique drone and noise synth sounds for eco-friendly music production. Experiment with ambient pads and drone loops to enhance your music catalog.">
+    <meta name="keywords" content="drone synth, noise synth, eco-friendly music production, synth lines, ambient pads, drone loops, music production, experimental music, synth catalog">
+    <meta name="author" content="SoundSynths">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="Drone Synth - Drone & Noise Synth for Musicians">
+    <meta property="og:description" content="Explore Drone Synth to produce unique drone and noise sounds for your music projects. Perfect for eco-conscious musicians experimenting with synth lines.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourwebsite.com/drone-synth">
+    <meta property="og:image" content="https://yourwebsite.com/images/drone-synth-og.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Drone Synth - Drone & Noise Synth">
+    <meta name="twitter:description" content="Create experimental drone and noise synth sounds for music production with Drone Synth, designed for eco-friendly musicians.">
+    <meta name="twitter:image" content="https://yourwebsite.com/images/drone-synth-twitter.jpg">
+    <link rel="icon" type="image/png" href="https://yourwebsite.com/favicon.ico">
+    <title>Drone Synth</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            text-shadow: 0 0 5px #fff;
+            letter-spacing: 2px;
+            text-align: center;
+            padding: 10px 0;
+            margin: 0;
+        }
+
+        .container {
+            flex: 1;
+            width: 100%;
+            max-width: 100vw;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .visualizer {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            background: rgba(10, 10, 10, 0.9);
+            border: 2px solid #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #fff, inset 0 0 5px rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            background-image: linear-gradient(
+                to right,
+                transparent 0%,
+                #f00 50%,
+                transparent 100%
+            );
+            background-size: 200% 100%;
+            animation: wave 2s linear infinite;
+        }
+
+        @keyframes wave {
+            0% { background-position: 200% 0; }
+            100% { background-position: 0 0; }
+        }
+
+        .visualizer::before {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f00;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px #f00;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .drum-rack, .controls {
+            background: rgba(10, 10, 10, 0.9);
+            border: 2px solid #fff;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 0 10px #fff, inset 0 0 5px rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .drum-rack:hover, .controls:hover {
+            box-shadow: 0 0 15px #fff, inset 0 0 10px rgba(255, 255, 255, 0.4);
+        }
+
+        h2 {
+            font-size: 0.9rem;
+            margin: 0 0 8px 0;
+            color: #fff;
+            text-shadow: 0 0 3px #fff;
+        }
+
+        .drum-pads {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .drum-pad {
+            background: #1a1a1a;
+            color: #fff;
+            border: 1px solid #fff;
+            border-radius: 5px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+        }
+
+        .drum-pad:hover {
+            background: #fff;
+            color: #000;
+            box-shadow: 0 0 10px #fff;
+        }
+
+        .drum-pad:active {
+            background: #ccc;
+            transform: scale(0.95);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        button, select, input[type="range"] {
+            background: #1a1a1a;
+            color: #fff;
+            border: 1px solid #fff;
+            border-radius: 5px;
+            padding: 6px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+        }
+
+        button:hover, select:hover, input[type="range"]:hover {
+            background: #fff;
+            color: #000;
+            box-shadow: 0 0 10px #fff;
+        }
+
+        #arp-toggle.active {
+            background: #fff;
+            color: #000;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.7rem;
+            padding: 10px 0;
+            color: #ccc;
+        }
+
+        @media (max-width: 400px) {
+            h1 {
+                font-size: 1.2rem;
+            }
+            .drum-pads {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            .drum-pad, button, select, input[type="range"] {
+                font-size: 0.65rem;
+                padding: 5px;
+            }
+            h2 {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Drone Synth</h1>
+    <div class="container">
+        <div class="visualizer">
+            <canvas id="visualizer-canvas"></canvas>
+        </div>
+        <div class="drum-rack">
+            <h2>Ambient Pads & Drone Loops</h2>
+            <div class="drum-pads">
+                <div class="drum-pad" data-note="ghost-chime">Ghost Chime</div>
+                <div class="drum-pad" data-note="distant-rattle">Distant Rattle</div>
+                <div class="drum-pad" data-note="drip-drone">Drip Drone</div>
+                <div class="drum-pad" data-note="crypt-creak">Crypt Creak</div>
+                <div class="drum-pad" data-note="shadow-howl">Shadow Howl</div>
+                <div class="drum-pad" data-note="metal-whisper">Metal Whisper</div>
+                <div class="drum-pad" data-note="void-pulse">Void Pulse</div>
+                <div class="drum-pad" data-note="drone-loop1">Drone Loop 1</div>
+                <div class="drum-pad" data-note="drone-loop2">Drone Loop 2</div>
+                <div class="drum-pad" data-note="drone-loop3">Drone Loop 3</div>
+                <div class="drum-pad" data-note="drone-loop4">Drone Loop 4</div>
+            </div>
+        </div>
+        <div class="controls">
+            <h2>Drone Controls</h2>
+            <button id="autoplay">Start Descent</button>
+            <button id="arp-toggle">Arp Off</button>
+            <select id="synth-type">
+                <option value="sawtooth">Sawtooth</option>
+                <option value="sine">Sine</option>
+                <option value="triangle">Triangle</option>
+                <option value="square">Square</option>
+            </select>
+            <select id="arp-speed">
+                <option value="0.125">Very Fast</option>
+                <option value="0.25">Swift</option>
+                <option value="0.5" selected>Moderate</option>
+                <option value="1">Solemn</option>
+                <option value="2">Very Slow</option>
+            </select>
+            <select id="arp-mode">
+                <option value="up">Up</option>
+                <option value="down">Down</option>
+                <option value="up-down">Up-Down</option>
+                <option value="random">Random</option>
+                <option value="long">Long Sequence</option>
+            </select>
+            <select id="song-select">
+                <option value="dungeon">Dungeon Depths</option>
+                <option value="crypt">Crypt Whispers</option>
+                <option value="void">Abyssal Void</option>
+            </select>
+            <input type="range" id="volume" min="0" max="1" step="0.01" value="0.5">
+        </div>
+    </div>
+    <footer>© SoundSynths 2025</footer>
+
+    <script>
+        let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const reverb = audioContext.createConvolver();
+        const gainNodeMaster = audioContext.createGain();
+        const compressor = audioContext.createDynamicsCompressor();
+        const analyser = audioContext.createAnalyser();
+
+        compressor.threshold.setValueAtTime(-30, audioContext.currentTime);
+        compressor.knee.setValueAtTime(40, audioContext.currentTime);
+        compressor.ratio.setValueAtTime(12, audioContext.currentTime);
+        compressor.attack.setValueAtTime(0, audioContext.currentTime);
+        compressor.release.setValueAtTime(0.25, audioContext.currentTime);
+
+        gainNodeMaster.connect(compressor);
+        compressor.connect(analyser);
+        analyser.connect(audioContext.destination);
+        analyser.fftSize = 256;
+        let isPlaying = false;
+        let isArpActive = false;
+        let intervalId = null;
+        let arpIntervalId = null;
+        let loopIntervals = {};
+
+        function setupReverb() {
+            const impulse = audioContext.createBuffer(2, audioContext.sampleRate * 3, audioContext.sampleRate);
+            for (let channel = 0; channel < 2; channel++) {
+                const channelData = impulse.getChannelData(channel);
+                for (let i = 0; i < channelData.length; i++) {
+                    channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / channelData.length, 4);
+                }
+            }
+            reverb.buffer = impulse;
+        }
+        setupReverb();
+
+        const volumeControl = document.getElementById('volume');
+        gainNodeMaster.gain.value = volumeControl.value;
+        volumeControl.addEventListener('input', () => {
+            gainNodeMaster.gain.value = volumeControl.value;
+        });
+
+        const canvas = document.getElementById('visualizer-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 200;
+        canvas.height = 200;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        const history = [];
+        const maxHistory = 10;
+
+        function drawVisualizer() {
+            analyser.getByteTimeDomainData(dataArray);
+            history.push(new Uint8Array(dataArray));
+            if (history.length > maxHistory) history.shift();
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const barWidth = canvas.width / 20;
+            for (let i = 0; i < 20; i++) {
+                const index = Math.floor((i / 20) * bufferLength);
+                const v = dataArray[index] / 128.0;
+                const barHeight = v * canvas.height * 0.5;
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+                ctx.fillRect(i * barWidth, canvas.height - barHeight, barWidth - 1, barHeight);
+
+                for (let j = 0; j < history.length; j++) {
+                    const pastData = history[j][index] / 128.0;
+                    const pastHeight = pastData * canvas.height * 0.5;
+                    ctx.fillStyle = `rgba(255, 255, 255, ${0.1 * (maxHistory - j) / maxHistory})`;
+                    ctx.fillRect(i * barWidth, canvas.height - pastHeight, barWidth - 1, pastHeight);
+                }
+            }
+
+            requestAnimationFrame(drawVisualizer);
+        }
+
+        function startAudioContext() {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    drawVisualizer();
+                });
+            }
+        }
+
+        document.addEventListener('click', startAudioContext);
+        document.addEventListener('touchstart', startAudioContext);
+
+        function playSound(note, isLoop = false) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(reverb);
+            reverb.connect(gainNodeMaster);
+
+            switch (note) {
+                case 'ghost-chime':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.9, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.5);
+                    break;
+                case 'distant-rattle':
+                    oscillator.type = 'square';
+                    oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.0);
+                    break;
+                case 'drip-drone':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.0);
+                    break;
+                case 'crypt-creak':
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(90, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.9, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.5);
+                    break;
+                case 'shadow-howl':
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(120, audioContext.currentTime + 3.0);
+                    gainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 3.0);
+                    break;
+                case 'metal-whisper':
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 2.5);
+                    gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.5);
+                    break;
+                case 'void-pulse':
+                    oscillator.type = 'square';
+                    oscillator.frequency.setValueAtTime(60, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(1.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 3.0);
+                    break;
+                case 'drone-loop1':
+                    oscillator.type = document.getElementById('synth-type').value;
+                    oscillator.frequency.setValueAtTime(65.41, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(130.81, audioContext.currentTime + 4.0);
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    break;
+                case 'drone-loop2':
+                    oscillator.type = document.getElementById('synth-type').value;
+                    oscillator.frequency.setValueAtTime(87.31, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(174.61, audioContext.currentTime + 5.0);
+                    gainNode.gain.setValueAtTime(0.25, audioContext.currentTime);
+                    break;
+                case 'drone-loop3':
+                    oscillator.type = document.getElementById('synth-type').value;
+                    oscillator.frequency.setValueAtTime(98.00, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(196.00, audioContext.currentTime + 3.0);
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    break;
+                case 'drone-loop4':
+                    oscillator.type = document.getElementById('synth-type').value;
+                    oscillator.frequency.setValueAtTime(116.54, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(233.08, audioContext.currentTime + 6.0);
+                    gainNode.gain.setValueAtTime(0.35, audioContext.currentTime);
+                    break;
+            }
+
+            oscillator.start();
+            if (!isLoop) {
+                oscillator.stop(audioContext.currentTime + 5.0);
+            } else {
+                return { oscillator, gainNode };
+            }
+        }
+
+        document.querySelectorAll('.drum-pad').forEach(pad => {
+            pad.addEventListener('click', () => {
+                const note = pad.getAttribute('data-note');
+                if (note.startsWith('drone-loop')) {
+                    if (loopIntervals[note]) {
+                        loopIntervals[note].oscillator.stop();
+                        clearInterval(loopIntervals[note].interval);
+                        delete loopIntervals[note];
+                        pad.style.background = '#1a1a1a';
+                    } else {
+                        const { oscillator, gainNode } = playSound(note, true);
+                        const interval = setInterval(() => {
+                            gainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
+                            gainNode.gain.exponentialRampToValueAtTime(0.3, audioContext.currentTime + 0.2);
+                            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 4.0);
+                        }, 4000);
+                        loopIntervals[note] = { oscillator, gainNode, interval };
+                        pad.style.background = '#ccc';
+                    }
+                } else {
+                    playSound(note);
+                }
+            });
+        });
+
+        const autoplayButton = document.getElementById('autoplay');
+        const arpToggleButton = document.getElementById('arp-toggle');
+        const arpSpeedSelect = document.getElementById('arp-speed');
+        const arpModeSelect = document.getElementById('arp-mode');
+        const songSelect = document.getElementById('song-select');
+        const bpm = 40 + Math.floor(Math.random() * 40);
+        const beat = 60 / bpm * 1000;
+        const barLength = beat * 8;
+        const drumTypes = [
+            'ghost-chime', 'distant-rattle', 'drip-drone', 'crypt-creak',
+            'shadow-howl', 'metal-whisper', 'void-pulse', 'drone-loop1',
+            'drone-loop2', 'drone-loop3', 'drone-loop4'
+        ];
+
+        const aMinorScale = [
+            65.41, 73.42, 77.78, 87.31, 98.00, 103.83, 116.54,
+            130.81, 138.59, 155.56, 174.61, 196.00, 207.65, 233.08
+        ];
+
+        function playSynth(frequency) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(reverb);
+            reverb.connect(gainNodeMaster);
+
+            oscillator.type = document.getElementById('synth-type').value;
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 3.0);
+
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 3.0);
+        }
+
+        function generateRandomDrumPattern(song) {
+            const drumPattern = [];
+            const steps = 16;
+            const density = song === 'dungeon' ? 0.3 : song === 'crypt' ? 0.2 : 0.4;
+            for (let i = 0; i < steps; i++) {
+                if (Math.random() > density) {
+                    const drum = drumTypes[Math.floor(Math.random() * drumTypes.length)];
+                    drumPattern.push({ note: drum, time: i * (beat / 2) });
+                }
+            }
+            return drumPattern;
+        }
+
+        function generateArpPattern(mode) {
+            const noteCount = mode === 'long' ? 12 : 5 + Math.floor(Math.random() * 4);
+            const arpNotes = [];
+            const startIndex = Math.floor(Math.random() * (aMinorScale.length - noteCount));
+            for (let i = 0; i < noteCount; i++) {
+                arpNotes.push(aMinorScale[startIndex + i]);
+            }
+
+            let sequence = [];
+            if (mode === 'up') sequence = [...arpNotes];
+            else if (mode === 'down') sequence = [...arpNotes].reverse();
+            else if (mode === 'up-down') sequence = [...arpNotes, ...[...arpNotes].reverse()];
+            else if (mode === 'random') sequence = [...arpNotes].sort(() => Math.random() - 0.5);
+            else if (mode === 'long') sequence = [...arpNotes];
+
+            return { sequence, mode };
+        }
+
+        let arpPattern = generateArpPattern(arpModeSelect.value);
+        let arpIndex = 0;
+
+        function playBar(drumPattern) {
+            drumPattern.forEach(d => {
+                if (!d.note.startsWith('drone-loop')) {
+                    setTimeout(() => playSound(d.note), d.time);
+                }
+            });
+        }
+
+        function playArpNote() {
+            playSynth(arpPattern.sequence[arpIndex]);
+            arpIndex = (arpIndex + 1) % arpPattern.sequence.length;
+        }
+
+        const songs = {
+            dungeon: { bpm: 50, density: 0.3, arpMode: 'long' },
+            crypt: { bpm: 40, density: 0.2, arpMode: 'random' },
+            void: { bpm: 60, density: 0.4, arpMode: 'up-down' }
+        };
+
+        autoplayButton.addEventListener('click', () => {
+            if (!isPlaying) {
+                isPlaying = true;
+                autoplayButton.textContent = 'Stop Descent';
+                const song = songSelect.value;
+                const drumPattern = generateRandomDrumPattern(song);
+                arpPattern = generateArpPattern(arpModeSelect.value);
+                arpIndex = 0;
+                playBar(drumPattern);
+                intervalId = setInterval(() => playBar(drumPattern), barLength);
+
+                if (isArpActive) {
+                    const arpSpeed = parseFloat(arpSpeedSelect.value) * beat;
+                    arpIntervalId = setInterval(playArpNote, arpSpeed);
+                }
+            } else {
+                isPlaying = false;
+                autoplayButton.textContent = 'Start Descent';
+                clearInterval(intervalId);
+                clearInterval(arpIntervalId);
+                for (const note in loopIntervals) {
+                    loopIntervals[note].oscillator.stop();
+                    clearInterval(loopIntervals[note].interval);
+                    document.querySelector(`[data-note="${note}"]`).style.background = '#1a1a1a';
+                }
+                loopIntervals = {};
+                intervalId = null;
+                arpIntervalId = null;
+            }
+        });
+
+        arpToggleButton.addEventListener('click', () => {
+            isArpActive = !isArpActive;
+            arpToggleButton.textContent = isArpActive ? 'Arp On' : 'Arp Off';
+            arpToggleButton.classList.toggle('active', isArpActive);
+
+            if (isPlaying) {
+                if (isArpActive && !arpIntervalId) {
+                    const arpSpeed = parseFloat(arpSpeedSelect.value) * beat;
+                    arpIntervalId = setInterval(playArpNote, arpSpeed);
+                } else if (!isArpActive && arpIntervalId) {
+                    clearInterval(arpIntervalId);
+                    arpIntervalId = null;
+                }
+            }
+        });
+
+        function updateArp() {
+            if (isPlaying && isArpActive) {
+                clearInterval(arpIntervalId);
+                arpPattern = generateArpPattern(arpModeSelect.value);
+                arpIndex = 0;
+                const arpSpeed = parseFloat(arpSpeedSelect.value) * beat;
+                arpIntervalId = setInterval(playArpNote, arpSpeed);
+            }
+        }
+
+        arpSpeedSelect.addEventListener('change', updateArp);
+        arpModeSelect.addEventListener('change', updateArp);
+        songSelect.addEventListener('change', () => {
+            if (isPlaying) {
+                clearInterval(intervalId);
+                clearInterval(arpIntervalId);
+                const drumPattern = generateRandomDrumPattern(songSelect.value);
+                playBar(drumPattern);
+                intervalId = setInterval(() => playBar(drumPattern), barLength);
+                updateArp();
+            }
+        });
+    </script>
+</body>
+</html>
