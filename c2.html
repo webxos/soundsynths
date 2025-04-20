@@ -74,7 +74,7 @@
             border: 2px solid #000; /* Basic black border */
             font-size: clamp(8px, 2vw, 10px);
             text-align: center;
-            transition: background 0.1s, transform 0.1s;
+            transition: background 0.1s, transform 0.1s, opacity 0.1s;
             touch-action: none;
             user-select: none;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -85,7 +85,7 @@
             opacity: 1;
         }
         .pad.loop-active {
-            opacity: 1; /* Slightly brighter for active loops */
+            opacity: 1; /* Brighter for active loops */
         }
         .controls {
             padding: 8px;
@@ -500,22 +500,27 @@
         pads.forEach((pad, i) => {
             const handlePad = debounce(() => {
                 pad.classList.add('active');
-                pad.style.background = padColors[i]; // Set chromatic color
-                setTimeout(() => {
-                    pad.classList.remove('active');
-                    pad.style.background = '#fff'; // Revert to white
-                    if (pad.dataset.type === 'loop' && synth.loops[parseInt(pad.dataset.loop)].active) {
-                        pad.classList.add('loop-active');
-                    } else {
-                        pad.classList.remove('loop-active');
-                    }
-                }, 100);
                 if (pad.dataset.type === 'drum') {
+                    // Drum pads: Flash color for 100ms
+                    pad.style.background = padColors[i];
+                    setTimeout(() => {
+                        pad.classList.remove('active');
+                        pad.style.background = '#fff';
+                    }, 100);
                     drumMachine.playDrum(pad.dataset.drum);
                 } else {
+                    // Synth pads: Toggle color based on active state
                     const index = parseInt(pad.dataset.loop);
                     synth.toggleLoop(index);
+                    if (synth.loops[index].active) {
+                        pad.style.background = padColors[i];
+                        pad.classList.add('loop-active');
+                    } else {
+                        pad.style.background = '#fff';
+                        pad.classList.remove('loop-active');
+                    }
                     pad.style.opacity = synth.loops[index].active ? '1' : '0.8';
+                    setTimeout(() => pad.classList.remove('active'), 100);
                 }
             }, 50);
 
