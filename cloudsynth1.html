@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mobile Ambient Synth</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background: #111;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            overflow-x: hidden;
+            overflow-y: auto;
+            color: #fff;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            min-height: 100vh;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .pads {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 10px;
+            padding: 10px;
+        }
+        .pad {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            opacity: 0.8;
+            font-size: 12px;
+            text-align: center;
+            touch-action: none;
+        }
+        .pad:hover { opacity: 1; }
+        .controls {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .effects-section {
+            margin-top: auto;
+            padding: 10px;
+        }
+        .xy-pad {
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            position: relative;
+            cursor: crosshair;
+            margin: 0 auto;
+            touch-action: none;
+        }
+        .xy-dot {
+            width: 15px;
+            height: 15px;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+            transform: translate(-50%, -50%);
+        }
+        canvas {
+            width: 100%;
+            max-width: 400px;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            margin: 10px auto;
+            display: block;
+        }
+        button { padding: 5px 10px; font-size: 14px; }
+        h2 { margin: 10px; font-size: 18px; }
+        input[type="range"] { width: 100%; max-width: 200px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="section">
+            <h2>Ambient Pads</h2>
+            <div class="pads" id="synthPads">
+                <div class="pad" data-loop="0">Crystal</div>
+                <div class="pad" data-loop="1">Sweep</div>
+                <div class="pad" data-loop="2">Ethereal</div>
+                <div class="pad" data-loop="3">Wind</div>
+                <div class="pad" data-loop="4">Pulse</div>
+                <div class="pad" data-loop="5">Glass</div>
+                <div class="pad" data-loop="6">Mist</div>
+                <div class="pad" data-loop="7">Cosmic</div>
+                <div class="pad" data-loop="8">Drone</div>
+                <div class="pad" data-loop="9">Chime</div>
+            </div>
+        </div>
+        <div class="section">
+            <h2>Drum Hits</h2>
+            <div class="pads" id="drumPads">
+                <div class="pad" data-drum="kick">Kick</div>
+                <div class="pad" data-drum="snare">Snare</div>
+                <div class="pad" data-drum="hihat">HiHat</div>
+                <div class="pad" data-drum="clap">Clap</div>
+                <div class="pad" data-drum="tom">Tom</div>
+                <div class="pad" data-drum="rim">Rim</div>
+            </div>
+            <div class="controls">
+                <button id="play">Play</button>
+                <button id="stop">Stop</button>
+                <input type="range" id="tempo" min="60" max="180" value="90">
+                <span id="tempo-value">90 BPM</span>
+            </div>
+        </div>
+        <div class="effects-section">
+            <h2>Filter/EQ</h2>
+            <div class="xy-pad" id="xyPad">
+                <div class="xy-dot" id="xyDot"></div>
+            </div>
+            <canvas id="waveform"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 2048;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        class AmbientSynth {
+            constructor() {
+                this.loops = [];
+                this.notes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 466.16, 523.25, 587.33, 659.25];
+                this.masterGain = audioContext.createGain();
+                this.filter = audioContext.createBiquadFilter();
+                this.eq = audioContext.createBiquadFilter();
+
+                this.filter.type = 'lowpass';
+                this.eq.type = 'peaking';
+                
+                this.masterGain.connect(this.filter);
+                this.filter.connect(this.eq);
+                this.eq.connect(analyser);
+                analyser.connect(audioContext.destination);
+                
+                this.masterGain.gain.value = 0.3;
+                this.filter.frequency.value = 1000;
+                this.eq.frequency.value = 1000;
+                this.eq.gain.value = 0;
+
+                this.generateLoops();
+            }
+
+            generateLoops() {
+                for (let i = 0; i < 10; i++) {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.type = i % 2 === 0 ? 'triangle' : 'sine';
+                    osc.frequency.value = this.notes[i];
+                    gain.gain.value = 0;
+                    
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.start();
+                    
+                    this.loops.push({ osc, gain, active: false });
+                }
+            }
+
+            toggleLoop(index) {
+                const loop = this.loops[index];
+                loop.active = !loop.active;
+                
+                if (loop.active) {
+                    this.fadeIn(loop.gain);
+                } else {
+                    this.fadeOut(loop.gain);
+                }
+            }
+
+            fadeIn(gainNode) {
+                gainNode.gain.cancelScheduledValues(audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 2);
+            }
+
+            fadeOut(gainNode) {
+                gainNode.gain.cancelScheduledValues(audioContext.currentTime);
+                gainNode.gain.setValueAtTime(gainNode.gain.value, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 2);
+            }
+
+            setFilterEQ(x, y) {
+                this.filter.frequency.value = 200 + x * 4800; // 200-5000 Hz
+                this.eq.gain.value = (y - 0.5) * 24; // -12 to +12 dB
+            }
+        }
+
+        class DrumMachine {
+            constructor() {
+                this.bpm = 90;
+                this.isPlaying = false;
+                this.patterns = {
+                    kick:  [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+                    snare: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+                    hihat: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                    clap:  [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+                    tom:   [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+                    rim:   [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0]
+                };
+                this.step = 0;
+                this.nextStepTime = 0;
+            }
+
+            playDrum(drum) {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                const noise = audioContext.createBufferSource();
+                let source;
+
+                switch(drum) {
+                    case 'kick':
+                        osc.frequency.setValueAtTime(150, audioContext.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+                        gain.gain.setValueAtTime(1, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+                        source = osc;
+                        break;
+                    case 'snare':
+                        noise.buffer = this.createNoiseBuffer();
+                        gain.gain.setValueAtTime(0.7, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+                        source = noise;
+                        break;
+                    case 'hihat':
+                        noise.buffer = this.createNoiseBuffer();
+                        gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
+                        source = noise;
+                        break;
+                    case 'clap':
+                        noise.buffer = this.createNoiseBuffer();
+                        gain.gain.setValueAtTime(0.5, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
+                        source = noise;
+                        break;
+                    case 'tom':
+                        osc.frequency.setValueAtTime(200, audioContext.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.4);
+                        gain.gain.setValueAtTime(0.6, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4);
+                        source = osc;
+                        break;
+                    case 'rim':
+                        noise.buffer = this.createNoiseBuffer();
+                        gain.gain.setValueAtTime(0.4, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                        source = noise;
+                        break;
+                }
+
+                source.connect(gain);
+                gain.connect(analyser);
+                source.start();
+                source.stop(audioContext.currentTime + 0.5);
+            }
+
+            createNoiseBuffer() {
+                const bufferSize = audioContext.sampleRate * 0.5;
+                const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                return buffer;
+            }
+
+            start() {
+                if (!this.isPlaying) {
+                    this.isPlaying = true;
+                    this.nextStepTime = audioContext.currentTime;
+                    this.schedule();
+                }
+            }
+
+            stop() {
+                this.isPlaying = false;
+            }
+
+            schedule() {
+                if (!this.isPlaying) return;
+
+                while (this.nextStepTime < audioContext.currentTime + 0.1) {
+                    if (this.patterns.kick[this.step]) this.playDrum('kick');
+                    if (this.patterns.snare[this.step]) this.playDrum('snare');
+                    if (this.patterns.hihat[this.step]) this.playDrum('hihat');
+                    if (this.patterns.clap[this.step]) this.playDrum('clap');
+                    if (this.patterns.tom[this.step]) this.playDrum('tom');
+                    if (this.patterns.rim[this.step]) this.playDrum('rim');
+
+                    const beatDuration = 60 / this.bpm / 4;
+                    this.nextStepTime += beatDuration;
+                    this.step = (this.step + 1) % 16;
+                }
+
+                requestAnimationFrame(() => this.schedule());
+            }
+
+            setTempo(bpm) {
+                this.bpm = bpm;
+            }
+        }
+
+        // Initialize
+        const synth = new AmbientSynth();
+        const drumMachine = new DrumMachine();
+        const synthPads = document.querySelectorAll('#synthPads .pad');
+        const drumPads = document.querySelectorAll('#drumPads .pad');
+        const xyPad = document.getElementById('xyPad');
+        const xyDot = document.getElementById('xyDot');
+        const canvas = document.getElementById('waveform');
+        const ctx = canvas.getContext('2d');
+
+        // Color animation
+        function animateColors() {
+            const allPads = document.querySelectorAll('.pad');
+            allPads.forEach((pad, i) => {
+                const hue = (Date.now() / 50 + i * 36) % 360;
+                pad.style.background = `hsl(${hue}, 70%, 40%)`;
+            });
+            requestAnimationFrame(animateColors);
+        }
+        animateColors();
+
+        // Synth pad controls
+        synthPads.forEach(pad => {
+            pad.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const index = parseInt(pad.dataset.loop);
+                synth.toggleLoop(index);
+                pad.style.opacity = synth.loops[index].active ? '1' : '0.8';
+            });
+            pad.addEventListener('click', () => {
+                const index = parseInt(pad.dataset.loop);
+                synth.toggleLoop(index);
+                pad.style.opacity = synth.loops[index].active ? '1' : '0.8';
+            });
+        });
+
+        // Drum pad controls
+        drumPads.forEach(pad => {
+            pad.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                drumMachine.playDrum(pad.dataset.drum);
+            });
+            pad.addEventListener('click', () => {
+                drumMachine.playDrum(pad.dataset.drum);
+            });
+        });
+
+        // Drum controls
+        document.getElementById('play').addEventListener('click', () => drumMachine.start());
+        document.getElementById('stop').addEventListener('click', () => drumMachine.stop());
+        document.getElementById('tempo').addEventListener('input', (e) => {
+            drumMachine.setTempo(e.target.value);
+            document.getElementById('tempo-value').textContent = `${e.target.value} BPM`;
+        });
+
+        // XY pad controls
+        let isDragging = false;
+        function updateXY(e, isTouch = false) {
+            const rect = xyPad.getBoundingClientRect();
+            const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+            const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+            let x = (clientX - rect.left) / rect.width;
+            let y = 1 - (clientY - rect.top) / rect.height;
+            x = Math.max(0, Math.min(1, x));
+            y = Math.max(0, Math.min(1, y));
+            
+            xyDot.style.left = `${x * 100}%`;
+            xyDot.style.top = `${y * 100}%`;
+            synth.setFilterEQ(x, y);
+        }
+
+        xyPad.addEventListener('mousedown', () => { isDragging = true; });
+        document.addEventListener('mouseup', () => { isDragging = false; });
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) updateXY(e);
+        });
+        xyPad.addEventListener('click', updateXY);
+
+        xyPad.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isDragging = true;
+            updateXY(e, true);
+        });
+        xyPad.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (isDragging) updateXY(e, true);
+        });
+        document.addEventListener('touchend', () => { isDragging = false; });
+
+        // Waveform visualization
+        function drawWaveform() {
+            requestAnimationFrame(drawWaveform);
+            analyser.getByteTimeDomainData(dataArray);
+            
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = `hsl(${(Date.now() / 50) % 360}, 70%, 50%)`;
+            ctx.beginPath();
+            
+            const sliceWidth = canvas.width / bufferLength;
+            let x = 0;
+            
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * canvas.height / 2;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+                x += sliceWidth;
+            }
+            
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+        }
+        drawWaveform();
+
+        // Resume audio context on user interaction (mobile requirement)
+        document.body.addEventListener('touchstart', () => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }, { once: true });
+    </script>
+</body>
+</html>
