@@ -316,6 +316,7 @@
                 <option value="void">Abyssal Void</option>
             </select>
             <input type="range" id="volume" min="0" max="1" step="0.01" value="0.5">
+            <input type="range" id="delay-time" min="0.1" max="1" step="0.01" value="0.3">
         </div>
     </div>
     <footer>© SoundSynths 2025</footer>
@@ -325,6 +326,10 @@
         const reverb = audioContext.createConvolver();
         const gainNodeMaster = audioContext.createGain();
         const compressor = audioContext.createDynamicsCompressor();
+        const delayNode = audioContext.createDelay(1.0);
+        const delayFeedback = audioContext.createGain();
+        const delayWet = audioContext.createGain();
+        const delayDry = audioContext.createGain();
         const analyser = audioContext.createAnalyser();
 
         compressor.threshold.setValueAtTime(-30, audioContext.currentTime);
@@ -333,10 +338,22 @@
         compressor.attack.setValueAtTime(0, audioContext.currentTime);
         compressor.release.setValueAtTime(0.25, audioContext.currentTime);
 
+        delayFeedback.gain.setValueAtTime(0.3, audioContext.currentTime);
+        delayWet.gain.setValueAtTime(0.7, audioContext.currentTime);
+        delayDry.gain.setValueAtTime(0.3, audioContext.currentTime);
+        delayNode.delayTime.setValueAtTime(0.3, audioContext.currentTime);
+
         gainNodeMaster.connect(compressor);
-        compressor.connect(analyser);
+        compressor.connect(delayDry);
+        compressor.connect(delayNode);
+        delayNode.connect(delayFeedback);
+        delayFeedback.connect(delayNode);
+        delayNode.connect(delayWet);
+        delayDry.connect(analyser);
+        delayWet.connect(analyser);
         analyser.connect(audioContext.destination);
         analyser.fftSize = 256;
+
         let isPlaying = false;
         let isArpActive = false;
         let intervalId = null;
@@ -359,6 +376,11 @@
         gainNodeMaster.gain.value = volumeControl.value;
         volumeControl.addEventListener('input', () => {
             gainNodeMaster.gain.value = volumeControl.value;
+        });
+
+        const delayTimeControl = document.getElementById('delay-time');
+        delayTimeControl.addEventListener('input', () => {
+            delayNode.delayTime.setValueAtTime(delayTimeControl.value, audioContext.currentTime);
         });
 
         const canvas = document.getElementById('visualizer-canvas');
@@ -602,12 +624,6 @@
             arpIndex = (arpIndex + 1) % arpPattern.sequence.length;
         }
 
-        const songs = {
-            dungeon: { bpm: 50, density: 0.3, arpMode: 'long' },
-            crypt: { bpm: 40, density: 0.2, arpMode: 'random' },
-            void: { bpm: 60, density: 0.4, arpMode: 'up-down' }
-        };
-
         autoplayButton.addEventListener('click', () => {
             if (!isPlaying) {
                 isPlaying = true;
@@ -677,6 +693,11 @@
                 updateArp();
             }
         });
+
+        const aMinorScale = [
+            65.41, 73.42, 77.78, 87.31, 98.00, 103.83, 116.54,
+            130.81, 138.59, 155.56, 174.61, 196.00, 207.65, 233.08
+        ];
     </script>
 </body>
 </html>
