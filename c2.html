@@ -47,6 +47,7 @@
             border: 3px solid #333;
             border-radius: 8px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            padding-bottom: 40px; /* Space for footer */
         }
         .section {
             margin-bottom: 10px;
@@ -68,17 +69,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #555;
-            color: #fff;
+            background: #fff; /* White default */
+            color: #000; /* Black text */
+            border: 2px solid #000; /* Basic black border */
             font-size: clamp(8px, 2vw, 10px);
             text-align: center;
             transition: background 0.1s, transform 0.1s;
             touch-action: none;
             user-select: none;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            opacity: 0.8;
         }
         .pad.active {
             transform: scale(0.95);
+            opacity: 1;
+        }
+        .pad.loop-active {
+            opacity: 1; /* Slightly brighter for active loops */
         }
         .controls {
             padding: 8px;
@@ -119,8 +126,27 @@
             max-width: 120px;
             cursor: pointer;
         }
-        .bpm-display {
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .control-label {
             font-size: clamp(9px, 2vw, 11px);
+        }
+        .control-value {
+            font-size: clamp(9px, 2vw, 11px);
+        }
+        footer {
+            text-align: center;
+            padding: 8px;
+            color: #000; /* Simple black text */
+            font-size: clamp(8px, 2vw, 10px);
+            font-family: 'Courier New', monospace;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+            margin-top: 10px;
         }
         h2 {
             margin: 8px;
@@ -132,6 +158,7 @@
             .container {
                 padding: 8px;
                 border-width: 2px;
+                padding-bottom: 30px; /* Adjusted for smaller screens */
             }
             .pads {
                 gap: 4px;
@@ -150,6 +177,10 @@
             }
             input[type="range"] {
                 max-width: 100px;
+            }
+            footer {
+                font-size: clamp(7px, 1.8vw, 9px);
+                padding: 6px;
             }
             h2 {
                 font-size: clamp(10px, 2.5vw, 12px);
@@ -185,11 +216,20 @@
                 <div class="control-row">
                     <button id="play">Play</button>
                     <button id="stop">Stop</button>
-                    <input type="range" id="tempo" min="60" max="180" value="90">
-                    <span class="bpm-display" id="tempo-value">90 BPM</span>
+                    <div class="control-group">
+                        <label for="tempo" class="control-label">BPM:</label>
+                        <input type="range" id="tempo" min="60" max="180" value="90">
+                        <span class="control-value" id="tempo-value">90</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="volume" class="control-label">Volume:</label>
+                        <input type="range" id="volume" min="0" max="100" value="70">
+                        <span class="control-value" id="volume-value">70%</span>
+                    </div>
                 </div>
             </div>
         </div>
+        <footer>© 2025 Sound Synths</footer>
     </div>
 
     <script>
@@ -210,12 +250,11 @@
         limiter.connect(audioContext.destination);
 
         class AmbientSynth {
-            constructor() {
+            constructor(masterGain) {
                 this.loops = [];
                 this.notes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 466.16, 523.25, 587.33, 659.25];
-                this.masterGain = audioContext.createGain();
-                this.masterGain.gain.value = 0.3;
-                this.masterGain.connect(compressor);
+                this.masterGain = masterGain;
+                this.masterGain.gain.value = 0.3 * 0.7; // Initial volume at 70%
                 this.generateLoops();
             }
 
@@ -257,9 +296,10 @@
         }
 
         class DrumMachine {
-            constructor() {
+            constructor(masterGain) {
                 this.bpm = 90;
                 this.isPlaying = false;
+                this.masterGain = masterGain;
                 this.patterns = [
                     // Techno: Driving, syncopated
                     {
@@ -354,7 +394,7 @@
                         break;
                 }
                 source.connect(gain);
-                gain.connect(compressor);
+                gain.connect(this.masterGain);
                 source.start();
                 source.stop(audioContext.currentTime + 0.5);
             }
@@ -413,13 +453,20 @@
         }
 
         // Initialize
-        const synth = new AmbientSynth();
-        const drumMachine = new DrumMachine();
+        const masterGain = audioContext.createGain();
+        masterGain.connect(compressor);
+        const synth = new AmbientSynth(masterGain);
+        const drumMachine = new DrumMachine(masterGain);
         const pads = document.querySelectorAll('#pads .pad');
         const playButton = document.getElementById('play');
         const stopButton = document.getElementById('stop');
         const tempoInput = document.getElementById('tempo');
         const tempoValue = document.getElementById('tempo-value');
+        const volumeInput = document.getElementById('volume');
+        const volumeValue = document.getElementById('volume-value');
+
+        // Pad Colors
+        const padColors = Array.from({ length: 16 }, (_, i) => `hsl(${i * 22.5}, 70%, 50%)`);
 
         // Keyboard Mapping
         const keyMap = {
@@ -441,12 +488,6 @@
             ';': { type: 'loop', value: '9' }
         };
 
-        // Pad Colors
-        const padColors = Array.from({ length: 16 }, (_, i) => `hsl(${i * 22.5}, 70%, 50%)`);
-        pads.forEach((pad, i) => {
-            pad.style.background = padColors[i];
-        });
-
         // Pad Interactions with Debouncing
         const debounce = (func, wait) => {
             let timeout;
@@ -459,7 +500,16 @@
         pads.forEach((pad, i) => {
             const handlePad = debounce(() => {
                 pad.classList.add('active');
-                setTimeout(() => pad.classList.remove('active'), 100);
+                pad.style.background = padColors[i]; // Set chromatic color
+                setTimeout(() => {
+                    pad.classList.remove('active');
+                    pad.style.background = '#fff'; // Revert to white
+                    if (pad.dataset.type === 'loop' && synth.loops[parseInt(pad.dataset.loop)].active) {
+                        pad.classList.add('loop-active');
+                    } else {
+                        pad.classList.remove('loop-active');
+                    }
+                }, 100);
                 if (pad.dataset.type === 'drum') {
                     drumMachine.playDrum(pad.dataset.drum);
                 } else {
@@ -502,7 +552,13 @@
 
         tempoInput.addEventListener('input', (e) => {
             drumMachine.setTempo(e.target.value);
-            tempoValue.textContent = `${e.target.value} BPM`;
+            tempoValue.textContent = `${e.target.value}`;
+        });
+
+        volumeInput.addEventListener('input', (e) => {
+            const volume = e.target.value / 100;
+            masterGain.gain.setValueAtTime(0.3 * volume, audioContext.currentTime);
+            volumeValue.textContent = `${e.target.value}%`;
         });
 
         // Resume Audio Context
