@@ -316,7 +316,14 @@
     <footer>© SoundSynths 2025</footer>
 
     <script>
-        let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let audioContext;
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log('AudioContext created successfully');
+        } catch (err) {
+            console.error('Failed to create AudioContext:', err);
+        }
+
         const reverb = audioContext.createConvolver();
         const gainNodeMaster = audioContext.createGain();
         const compressor = audioContext.createDynamicsCompressor();
@@ -342,6 +349,7 @@
         delayDry.gain.setValueAtTime(0.3, audioContext.currentTime);
         delayNode.delayTime.setValueAtTime(0.3, audioContext.currentTime);
 
+        gainNodeMaster.gain.setValueAtTime(0.5, audioContext.currentTime);
         gainNodeMaster.connect(compressor);
         compressor.connect(filter);
         filter.connect(delayDry);
@@ -361,14 +369,19 @@
         let loopIntervals = {};
 
         function setupReverb() {
-            const impulse = audioContext.createBuffer(2, audioContext.sampleRate * 3, audioContext.sampleRate);
-            for (let channel = 0; channel < 2; channel++) {
-                const channelData = impulse.getChannelData(channel);
-                for (let i = 0; i < channelData.length; i++) {
-                    channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / channelData.length, 4);
+            try {
+                const impulse = audioContext.createBuffer(2, audioContext.sampleRate * 3, audioContext.sampleRate);
+                for (let channel = 0; channel < 2; channel++) {
+                    const channelData = impulse.getChannelData(channel);
+                    for (let i = 0; i < channelData.length; i++) {
+                        channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / channelData.length, 4);
+                    }
                 }
+                reverb.buffer = impulse;
+                console.log('Reverb buffer set successfully');
+            } catch (err) {
+                console.error('Failed to set reverb buffer:', err);
             }
-            reverb.buffer = impulse;
         }
         setupReverb();
 
@@ -469,7 +482,7 @@
             history.push(new Uint8Array(freqDataArray));
             if (history.length > maxHistory) history.shift();
 
-            ctx.fillStyle = 'rgbaignorance is bliss; /* Clear canvas with semi-transparent black */
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             ctx.beginPath();
@@ -537,133 +550,182 @@
             requestAnimationFrame(drawVisualizer);
         }
 
+        function testSound() {
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.5);
+                console.log('Test sound played: 440Hz sine wave');
+            } catch (err) {
+                console.error('Test sound failed:', err);
+            }
+        }
+
         function startAudioContext() {
             if (audioContext.state === 'suspended') {
                 audioContext.resume().then(() => {
-                    console.log('AudioContext resumed');
+                    console.log('AudioContext resumed successfully');
                     drawVisualizer();
-                }).catch(err => console.error('AudioContext resume failed:', err));
+                    testSound();
+                }).catch(err => {
+                    console.error('AudioContext resume failed:', err);
+                    alert('Failed to start audio. Please try clicking a pad or refreshing the page.');
+                });
+            } else {
+                console.log('AudioContext state:', audioContext.state);
             }
         }
 
         document.addEventListener('click', startAudioContext);
         document.addEventListener('touchstart', startAudioContext);
         document.addEventListener('touchend', startAudioContext);
+        document.addEventListener('pointerdown', startAudioContext);
+        document.addEventListener('keydown', startAudioContext);
 
         function playSound(note, isLoop = false) {
-            console.log(`Playing sound: ${note}`);
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            oscillator.connect(gainNode);
-            gainNode.connect(reverb);
-            reverb.connect(gainNodeMaster);
+            console.log(`Attempting to play sound: ${note}, AudioContext state: ${audioContext.state}`);
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(reverb);
+                reverb.connect(gainNodeMaster);
 
-            switch (note) {
-                case 'ghost-chime':
-                    oscillator.type = 'sine';
-                    oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
-                    gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.5);
-                    break;
-                case 'distant-rattle':
-                    oscillator.type = 'square';
-                    oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
-                    gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.0);
-                    break;
-                case 'drip-drone':
-                    oscillator.type = 'sine';
-                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-                    gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.0);
-                    break;
-                case 'crypt-creak':
-                    oscillator.type = 'sawtooth';
-                    oscillator.frequency.setValueAtTime(90, audioContext.currentTime);
-                    gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.5);
-                    break;
-                case 'shadow-howl':
-                    oscillator.type = 'sawtooth';
-                    oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(120, audioContext.currentTime + 3.0);
-                    gainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 3.0);
-                    break;
-                case 'metal-whisper':
-                    oscillator.type = 'triangle';
-                    oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 2.5);
-                    gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.5);
-                    break;
-                case 'void-pulse':
-                    oscillator.type = 'square';
-                    oscillator.frequency.setValueAtTime(60, audioContext.currentTime);
-                    gainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 3.0);
-                    break;
-                case 'drone-loop1':
-                    oscillator.type = document.getElementById('synth-type').value;
-                    oscillator.frequency.setValueAtTime(65.41, audioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(130.81, audioContext.currentTime + 4.0);
-                    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-                    break;
-                case 'drone-loop2':
-                    oscillator.type = document.getElementById('synth-type').value;
-                    oscillator.frequency.setValueAtTime(87.31, audioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(174.61, audioContext.currentTime + 5.0);
-                    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-                    break;
-                case 'drone-loop3':
-                    oscillator.type = document.getElementById('synth-type').value;
-                    oscillator.frequency.setValueAtTime(98.00, audioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(196.00, audioContext.currentTime + 3.0);
-                    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-                    break;
-                case 'drone-loop4':
-                    oscillator.type = document.getElementById('synth-type').value;
-                    oscillator.frequency.setValueAtTime(116.54, audioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(233.08, audioContext.currentTime + 6.0);
-                    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-                    break;
-                default:
-                    console.error(`Unknown note: ${note}`);
-                    return;
-            }
+                switch (note) {
+                    case 'ghost-chime':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.5);
+                        break;
+                    case 'distant-rattle':
+                        oscillator.type = 'square';
+                        oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.0);
+                        break;
+                    case 'drip-drone':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.0);
+                        break;
+                    case 'crypt-creak':
+                        oscillator.type = 'sawtooth';
+                        oscillator.frequency.setValueAtTime(90, audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.5);
+                        break;
+                    case 'shadow-howl':
+                        oscillator.type = 'sawtooth';
+                        oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(120, audioContext.currentTime + 3.0);
+                        gainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 3.0);
+                        break;
+                    case 'metal-whisper':
+                        oscillator.type = 'triangle';
+                        oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 2.5);
+                        gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2.5);
+                        break;
+                    case 'void-pulse':
+                        oscillator.type = 'square';
+                        oscillator.frequency.setValueAtTime(60, audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 3.0);
+                        break;
+                    case 'drone-loop1':
+                        oscillator.type = document.getElementById('synth-type').value;
+                        oscillator.frequency.setValueAtTime(65.41, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(130.81, audioContext.currentTime + 4.0);
+                        gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+                        break;
+                    case 'drone-loop2':
+                        oscillator.type = document.getElementById('synth-type').value;
+                        oscillator.frequency.setValueAtTime(87.31, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(174.61, audioContext.currentTime + 5.0);
+                        gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+                        break;
+                    case 'drone-loop3':
+                        oscillator.type = document.getElementById('synth-type').value;
+                        oscillator.frequency.setValueAtTime(98.00, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(196.00, audioContext.currentTime + 3.0);
+                        gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+                        break;
+                    case 'drone-loop4':
+                        oscillator.type = document.getElementById('synth-type').value;
+                        oscillator.frequency.setValueAtTime(116.54, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(233.08, audioContext.currentTime + 6.0);
+                        gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+                        break;
+                    default:
+                        console.error(`Unknown note: ${note}`);
+                        return;
+                }
 
-            oscillator.start();
-            if (!isLoop) {
-                oscillator.stop(audioContext.currentTime + 5.0);
-            } else {
-                return { oscillator, gainNode };
+                oscillator.start();
+                console.log(`Sound started: ${note}, gain: ${gainNode.gain.value}`);
+                if (!isLoop) {
+                    oscillator.stop(audioContext.currentTime + 5.0);
+                } else {
+                    return { oscillator, gainNode };
+                }
+            } catch (err) {
+                console.error(`Failed to play sound ${note}:`, err);
             }
         }
 
         document.querySelectorAll('.drum-pad').forEach(pad => {
-            pad.addEventListener('click', () => {
+            const handleInteraction = () => {
+                startAudioContext();
                 const note = pad.getAttribute('data-note');
+                console.log(`Pad clicked: ${note}`);
                 if (note.startsWith('drone-loop')) {
                     if (loopIntervals[note]) {
-                        loopIntervals[note].oscillator.stop();
-                        clearInterval(loopIntervals[note].interval);
-                        delete loopIntervals[note];
-                        pad.style.background = '#1a1a1a';
+                        try {
+                            loopIntervals[note].oscillator.stop();
+                            clearInterval(loopIntervals[note].interval);
+                            delete loopIntervals[note];
+                            pad.style.background = '#1a1a1a';
+                            console.log(`Stopped drone loop: ${note}`);
+                        } catch (err) {
+                            console.error(`Error stopping drone loop ${note}:`, err);
+                        }
                     } else {
-                        const { oscillator, gainNode } = playSound(note, true);
-                        if (!oscillator) return;
+                        const sound = playSound(note, true);
+                        if (!sound) return;
+                        const { oscillator, gainNode } = sound;
                         const interval = setInterval(() => {
-                            gainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
-                            gainNode.gain.exponentialRampToValueAtTime(0.5, audioContext.currentTime + 0.2);
-                            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 4.0);
+                            try {
+                                gainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
+                                gainNode.gain.exponentialRampToValueAtTime(0.5, audioContext.currentTime + 0.2);
+                                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 4.0);
+                            } catch (err) {
+                                console.error(`Error in drone loop interval ${note}:`, err);
+                            }
                         }, 4000);
                         loopIntervals[note] = { oscillator, gainNode, interval };
                         pad.style.background = '#ccc';
+                        console.log(`Started drone loop: ${note}`);
                     }
                 } else {
                     playSound(note);
                 }
+            };
+            pad.addEventListener('click', handleInteraction);
+            pad.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handleInteraction();
             });
+            pad.addEventListener('touchend', (e) => e.preventDefault());
         });
 
         const autoplayButton = document.getElementById('autoplay');
@@ -686,19 +748,24 @@
         ];
 
         function playSynth(frequency) {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            oscillator.connect(gainNode);
-            gainNode.connect(reverb);
-            reverb.connect(gainNodeMaster);
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(reverb);
+                reverb.connect(gainNodeMaster);
 
-            oscillator.type = document.getElementById('synth-type').value;
-            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 3.0);
+                oscillator.type = document.getElementById('synth-type').value;
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 3.0);
 
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 3.0);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 3.0);
+                console.log(`Synth played: ${frequency}Hz`);
+            } catch (err) {
+                console.error(`Failed to play synth at ${frequency}Hz:`, err);
+            }
         }
 
         function generateRandomDrumPattern(song) {
@@ -749,6 +816,7 @@
         }
 
         autoplayButton.addEventListener('click', () => {
+            startAudioContext();
             if (!isPlaying) {
                 isPlaying = true;
                 autoplayButton.textContent = 'Stop Descent';
@@ -763,23 +831,30 @@
                     const arpSpeed = parseFloat(arpSpeedSelect.value) * beat;
                     arpIntervalId = setInterval(playArpNote, arpSpeed);
                 }
+                console.log('Autoplay started');
             } else {
                 isPlaying = false;
                 autoplayButton.textContent = 'Start Descent';
                 clearInterval(intervalId);
                 clearInterval(arpIntervalId);
                 for (const note in loopIntervals) {
-                    loopIntervals[note].oscillator.stop();
-                    clearInterval(loopIntervals[note].interval);
-                    document.querySelector(`[data-note="${note}"]`).style.background = '#1a1a1a';
+                    try {
+                        loopIntervals[note].oscillator.stop();
+                        clearInterval(loopIntervals[note].interval);
+                        document.querySelector(`[data-note="${note}"]`).style.background = '#1a1a1a';
+                    } catch (err) {
+                        console.error(`Error stopping loop ${note}:`, err);
+                    }
                 }
                 loopIntervals = {};
                 intervalId = null;
                 arpIntervalId = null;
+                console.log('Autoplay stopped');
             }
         });
 
         arpToggleButton.addEventListener('click', () => {
+            startAudioContext();
             isArpActive = !isArpActive;
             arpToggleButton.textContent = isArpActive ? 'Arp On' : 'Arp Off';
             arpToggleButton.classList.toggle('active', isArpActive);
@@ -788,9 +863,11 @@
                 if (isArpActive && !arpIntervalId) {
                     const arpSpeed = parseFloat(arpSpeedSelect.value) * beat;
                     arpIntervalId = setInterval(playArpNote, arpSpeed);
+                    console.log('Arp started');
                 } else if (!isArpActive && arpIntervalId) {
                     clearInterval(arpIntervalId);
                     arpIntervalId = null;
+                    console.log('Arp stopped');
                 }
             }
         });
@@ -802,6 +879,7 @@
                 arpIndex = 0;
                 const arpSpeed = parseFloat(arpSpeedSelect.value) * beat;
                 arpIntervalId = setInterval(playArpNote, arpSpeed);
+                console.log('Arp pattern updated');
             }
         }
 
@@ -815,6 +893,7 @@
                 playBar(drumPattern);
                 intervalId = setInterval(() => playBar(drumPattern), barLength);
                 updateArp();
+                console.log('Song changed');
             }
         });
     </script>
