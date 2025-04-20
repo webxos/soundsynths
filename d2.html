@@ -72,24 +72,12 @@
             );
             background-size: 200% 100%;
             animation: wave 2s linear infinite;
+            cursor: crosshair;
         }
 
         @keyframes wave {
             0% { background-position: 200% 0; }
             100% { background-position: 0 0; }
-        }
-
-        .visualizer::before {
-            content: '';
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: #f00;
-            border-radius: 50%;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 10px #f00;
         }
 
         canvas {
@@ -267,10 +255,6 @@
                 width: 150px;
                 height: 150px;
             }
-            .visualizer::before {
-                width: 8px;
-                height: 8px;
-            }
         }
     </style>
 </head>
@@ -336,6 +320,7 @@
         const reverb = audioContext.createConvolver();
         const gainNodeMaster = audioContext.createGain();
         const compressor = audioContext.createDynamicsCompressor();
+        const filter = audioContext.createBiquadFilter();
         const delayNode = audioContext.createDelay(1.0);
         const delayFeedback = audioContext.createGain();
         const delayWet = audioContext.createGain();
@@ -348,14 +333,19 @@
         compressor.attack.setValueAtTime(0, audioContext.currentTime);
         compressor.release.setValueAtTime(0.25, audioContext.currentTime);
 
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2000, audioContext.currentTime);
+        filter.Q.setValueAtTime(1, audioContext.currentTime);
+
         delayFeedback.gain.setValueAtTime(0.3, audioContext.currentTime);
         delayWet.gain.setValueAtTime(0.7, audioContext.currentTime);
         delayDry.gain.setValueAtTime(0.3, audioContext.currentTime);
         delayNode.delayTime.setValueAtTime(0.3, audioContext.currentTime);
 
         gainNodeMaster.connect(compressor);
-        compressor.connect(delayDry);
-        compressor.connect(delayNode);
+        compressor.connect(filter);
+        filter.connect(delayDry);
+        filter.connect(delayNode);
         delayNode.connect(delayFeedback);
         delayFeedback.connect(delayNode);
         delayNode.connect(delayWet);
@@ -398,33 +388,150 @@
         canvas.width = 187.5;
         canvas.height = 187.5;
         const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
+        const freqDataArray = new Uint8Array(bufferLength);
+        const timeDataArray = new Uint8Array(bufferLength);
         const history = [];
         const maxHistory = 10;
 
+        let isDragging = false;
+        let touchX = null;
+        let touchY = null;
+
+        function getMousePos(event) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            };
+        }
+
+        function getTouchPos(event) {
+            const rect = canvas.getBoundingClientRect();
+            const touch = event.touches[0];
+            return {
+                x: touch.clientX - rect.left,
+                y: touch.clientY - rect.top
+            };
+        }
+
+        function updateFilter(x, y) {
+            const freq = 500 + (x / canvas.width) * (5000 - 500);
+            const q = 0.5 + (1 - y / canvas.height) * (10 - 0.5);
+            filter.frequency.setValueAtTime(freq, audioContext.currentTime);
+            filter.Q.setValueAtTime(q, audioContext.currentTime);
+            touchX = x;
+            touchY = y;
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            const pos = getMousePos(e);
+            updateFilter(pos.x, pos.y);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const pos = getMousePos(e);
+                updateFilter(pos.x, pos.y);
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+            touchX = null;
+            touchY = null;
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isDragging = true;
+            const pos = getTouchPos(e);
+            updateFilter(pos.x, pos.y);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (isDragging) {
+                const pos = getTouchPos(e);
+                updateFilter(pos.x, pos.y);
+            }
+        });
+
+        canvas.addEventListener('touchend', () => {
+            isDragging = false;
+            touchX = null;
+            touchY = null;
+        });
+
         function drawVisualizer() {
-            analyser.getByteTimeDomainData(dataArray);
-            history.push(new Uint8Array(dataArray));
+            analyser.getByteFrequencyData(freqDataArray);
+            analyser.getByteTimeDomainData(timeDataArray);
+            history.push(new Uint8Array(freqDataArray));
             if (history.length > maxHistory) history.shift();
 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillStyle = 'rgbaignorance is bliss; /* Clear canvas with semi-transparent black */
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 0.5;
+            for (let i = 1; i <= 5; i++) {
+                const x = (i / 5) * canvas.width;
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                const y = (i / 5) * canvas.height;
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+            }
+            ctx.stroke();
 
             const barWidth = canvas.width / 12;
             for (let i = 0; i < 12; i++) {
                 const index = Math.floor((i / 12) * bufferLength);
-                const v = dataArray[index] / 128.0;
+                const v = freqDataArray[index] / 255.0;
                 const barHeight = v * canvas.height * 0.5;
 
                 ctx.fillStyle = 'rgba(255, 255, 255, 1)';
                 ctx.fillRect(i * barWidth, canvas.height - barHeight, barWidth - 1, barHeight);
 
                 for (let j = 0; j < history.length; j++) {
-                    const pastData = history[j][index] / 128.0;
+                    const pastData = history[j][index] / 255.0;
                     const pastHeight = pastData * canvas.height * 0.5;
                     ctx.fillStyle = `rgba(255, 255, 255, ${0.1 * (maxHistory - j) / maxHistory})`;
                     ctx.fillRect(i * barWidth, canvas.height - pastHeight, barWidth - 1, pastHeight);
                 }
+            }
+
+            let avgFreq = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                avgFreq += freqDataArray[i];
+            }
+            avgFreq /= bufferLength;
+            let avgTime = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                avgTime += Math.abs(timeDataArray[i] - 128);
+            }
+            avgTime /= bufferLength;
+
+            const dotX = (avgFreq / 255) * canvas.width;
+            const dotY = canvas.height - (avgTime / 128) * canvas.height;
+
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#f00';
+            ctx.shadowColor = '#f00';
+            ctx.shadowBlur = 10;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            if (touchX !== null && touchY !== null) {
+                ctx.beginPath();
+                ctx.arc(touchX, touchY, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#00f';
+                ctx.shadowColor = '#00f';
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0;
             }
 
             requestAnimationFrame(drawVisualizer);
@@ -500,25 +607,25 @@
                     oscillator.type = document.getElementById('synth-type').value;
                     oscillator.frequency.setValueAtTime(65.41, audioContext.currentTime);
                     oscillator.frequency.exponentialRampToValueAtTime(130.81, audioContext.currentTime + 4.0);
-                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
                     break;
                 case 'drone-loop2':
                     oscillator.type = document.getElementById('synth-type').value;
                     oscillator.frequency.setValueAtTime(87.31, audioContext.currentTime);
                     oscillator.frequency.exponentialRampToValueAtTime(174.61, audioContext.currentTime + 5.0);
-                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
                     break;
                 case 'drone-loop3':
                     oscillator.type = document.getElementById('synth-type').value;
                     oscillator.frequency.setValueAtTime(98.00, audioContext.currentTime);
                     oscillator.frequency.exponentialRampToValueAtTime(196.00, audioContext.currentTime + 3.0);
-                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
                     break;
                 case 'drone-loop4':
                     oscillator.type = document.getElementById('synth-type').value;
                     oscillator.frequency.setValueAtTime(116.54, audioContext.currentTime);
                     oscillator.frequency.exponentialRampToValueAtTime(233.08, audioContext.currentTime + 6.0);
-                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
                     break;
                 default:
                     console.error(`Unknown note: ${note}`);
@@ -544,10 +651,10 @@
                         pad.style.background = '#1a1a1a';
                     } else {
                         const { oscillator, gainNode } = playSound(note, true);
-                        if (!oscillator) return; // Handle invalid note
+                        if (!oscillator) return;
                         const interval = setInterval(() => {
                             gainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
-                            gainNode.gain.exponentialRampToValueAtTime(0.3, audioContext.currentTime + 0.2);
+                            gainNode.gain.exponentialRampToValueAtTime(0.5, audioContext.currentTime + 0.2);
                             gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 4.0);
                         }, 4000);
                         loopIntervals[note] = { oscillator, gainNode, interval };
@@ -640,12 +747,6 @@
             playSynth(arpPattern.sequence[arpIndex]);
             arpIndex = (arpIndex + 1) % arpPattern.sequence.length;
         }
-
-        const songs = {
-            dungeon: { bpm: 50, density: 0.3, arpMode: 'long' },
-            crypt: { bpm: 40, density: 0.2, arpMode: 'random' },
-            void: { bpm: 60, density: 0.4, arpMode: 'up-down' }
-        };
 
         autoplayButton.addEventListener('click', () => {
             if (!isPlaying) {
