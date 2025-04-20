@@ -71,6 +71,7 @@
             width: 100%;
             height: 100%;
             display: block;
+            z-index: 1;
         }
 
         .drum-rack, .controls {
@@ -255,7 +256,7 @@
     <h1>Drone Synth</h1>
     <div class="container">
         <div class="xy-grid">
-            <canvas id="xy-canvas"></canvas>
+            <canvas id="xy-canvas" width="150" height="150"></canvas>
         </div>
         <div class="drum-rack">
             <h2>Ambient Pads & Drone Loops</h2>
@@ -314,6 +315,7 @@
             console.log('AudioContext created successfully');
         } catch (err) {
             console.error('Failed to create AudioContext:', err);
+            alert('AudioContext failed to initialize. Some features may not work.');
         }
 
         const reverb = audioContext.createConvolver();
@@ -383,10 +385,19 @@
         });
 
         const canvas = document.getElementById('xy-canvas');
-        const ctx = canvas.getContext('2d');
+        let ctx;
+        try {
+            ctx = canvas.getContext('2d');
+            console.log('Canvas context initialized successfully');
+        } catch (err) {
+            console.error('Failed to get canvas context:', err);
+            alert('Canvas initialization failed. XY grid may not display.');
+        }
+
         const isMobile = window.innerWidth <= 400;
         canvas.width = isMobile ? 150 : 187.5;
         canvas.height = isMobile ? 150 : 187.5;
+        console.log(`Canvas size set: ${canvas.width}x${canvas.height}`);
 
         let isDragging = false;
         let touchX = canvas.width / 2;
@@ -394,162 +405,219 @@
         let rotationAngle = 0;
 
         function getMousePos(event) {
-            const rect = canvas.getBoundingClientRect();
-            return {
-                x: Math.max(0, Math.min(canvas.width, event.clientX - rect.left)),
-                y: Math.max(0, Math.min(canvas.height, event.clientY - rect.top))
-            };
+            try {
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: Math.max(0, Math.min(canvas.width, event.clientX - rect.left)),
+                    y: Math.max(0, Math.min(canvas.height, event.clientY - rect.top))
+                };
+            } catch (err) {
+                console.error('Error in getMousePos:', err);
+                return { x: touchX, y: touchY };
+            }
         }
 
         function getTouchPos(event) {
-            const rect = canvas.getBoundingClientRect();
-            const touch = event.touches[0];
-            return {
-                x: Math.max(0, Math.min(canvas.width, touch.clientX - rect.left)),
-                y: Math.max(0, Math.min(canvas.height, touch.clientY - rect.top))
-            };
+            try {
+                const rect = canvas.getBoundingClientRect();
+                const touch = event.touches[0];
+                return {
+                    x: Math.max(0, Math.min(canvas.width, touch.clientX - rect.left)),
+                    y: Math.max(0, Math.min(canvas.height, touch.clientY - rect.top))
+                };
+            } catch (err) {
+                console.error('Error in getTouchPos:', err);
+                return { x: touchX, y: touchY };
+            }
         }
 
         function updateFilter(x, y) {
-            const freq = 500 + (x / canvas.width) * (5000 - 500);
-            const q = 0.5 + (1 - y / canvas.height) * (10 - 0.5);
-            filter.frequency.setValueAtTime(freq, audioContext.currentTime);
-            filter.Q.setValueAtTime(q, audioContext.currentTime);
-            touchX = x;
-            touchY = y;
+            try {
+                const freq = 500 + (x / canvas.width) * (5000 - 500);
+                const q = 0.5 + (1 - y / canvas.height) * (10 - 0.5);
+                filter.frequency.setValueAtTime(freq, audioContext.currentTime);
+                filter.Q.setValueAtTime(q, audioContext.currentTime);
+                touchX = x;
+                touchY = y;
+                console.log(`Filter updated: freq=${freq.toFixed(2)}Hz, Q=${q.toFixed(2)}`);
+            } catch (err) {
+                console.error('Error in updateFilter:', err);
+            }
         }
 
         canvas.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            const pos = getMousePos(e);
-            updateFilter(pos.x, pos.y);
+            try {
+                isDragging = true;
+                const pos = getMousePos(e);
+                updateFilter(pos.x, pos.y);
+                console.log(`Mouse down: x=${pos.x}, y=${pos.y}`);
+            } catch (err) {
+                console.error('Error in mousedown:', err);
+            }
         });
 
         canvas.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                const pos = getMousePos(e);
-                updateFilter(pos.x, pos.y);
+            try {
+                if (isDragging) {
+                    const pos = getMousePos(e);
+                    updateFilter(pos.x, pos.y);
+                    console.log(`Mouse move: x=${pos.x}, y=${pos.y}`);
+                }
+            } catch (err) {
+                console.error('Error in mousemove:', err);
             }
         });
 
         canvas.addEventListener('mouseup', () => {
             isDragging = false;
+            console.log('Mouse up');
         });
 
         canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            isDragging = true;
-            const pos = getTouchPos(e);
-            updateFilter(pos.x, pos.y);
+            try {
+                e.preventDefault();
+                isDragging = true;
+                const pos = getTouchPos(e);
+                updateFilter(pos.x, pos.y);
+                console.log(`Touch start: x=${pos.x}, y=${pos.y}`);
+            } catch (err) {
+                console.error('Error in touchstart:', err);
+            }
         });
 
         canvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (isDragging) {
-                const pos = getTouchPos(e);
-                updateFilter(pos.x, pos.y);
+            try {
+                e.preventDefault();
+                if (isDragging) {
+                    const pos = getTouchPos(e);
+                    updateFilter(pos.x, pos.y);
+                    console.log(`Touch move: x=${pos.x}, y=${pos.y}`);
+                }
+            } catch (err) {
+                console.error('Error in touchmove:', err);
             }
         });
 
         canvas.addEventListener('touchend', () => {
             isDragging = false;
+            console.log('Touch end');
         });
 
         function drawWaveform() {
-            ctx.beginPath();
-            ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
-            ctx.lineWidth = 1;
-            for (let x = 0; x < canvas.width; x++) {
-                const y = canvas.height / 2 + Math.sin(x * 0.05 + 0) * (canvas.height * 0.2);
-                x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-            }
-            ctx.stroke();
+            try {
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < canvas.width; x++) {
+                    const y = canvas.height / 2 + Math.sin(x * 0.05 + 0) * (canvas.height * 0.2);
+                    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                }
+                ctx.stroke();
 
-            ctx.beginPath();
-            ctx.strokeStyle = 'rgba(160, 0, 0, 0.25)';
-            for (let x = 0; x < canvas.width; x++) {
-                const y = canvas.height / 2 + Math.sin(x * 0.03 + 1) * (canvas.height * 0.15);
-                x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-            }
-            ctx.stroke();
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(160, 0, 0, 0.25)';
+                for (let x = 0; x < canvas.width; x++) {
+                    const y = canvas.height / 2 + Math.sin(x * 0.03 + 1) * (canvas.height * 0.15);
+                    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                }
+                ctx.stroke();
 
-            ctx.beginPath();
-            ctx.strokeStyle = 'rgba(128, 0, 0, 0.2)';
-            for (let x = 0; x < canvas.width; x++) {
-                const y = canvas.height / 2 + Math.sin(x * 0.07 + 2) * (canvas.height * 0.1);
-                x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(128, 0, 0, 0.2)';
+                for (let x = 0; x < canvas.width; x++) {
+                    const y = canvas.height / 2 + Math.sin(x * 0.07 + 2) * (canvas.height * 0.1);
+                    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            } catch (err) {
+                console.error('Error in drawWaveform:', err);
             }
-            ctx.stroke();
         }
 
         function draw3DGrid() {
-            const gridSize = 10;
-            const perspective = 0.4;
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height * 0.8;
-            const gridWidth = canvas.width * 0.8;
-            const gridHeight = canvas.height * 0.6;
+            try {
+                const gridSize = 10;
+                const perspective = 0.4;
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height * 0.8;
+                const gridWidth = canvas.width * 0.8;
+                const gridHeight = canvas.height * 0.6;
 
-            rotationAngle += 0.01;
-            const rotation = Math.sin(rotationAngle) * 0.0873;
+                rotationAngle += 0.005;
+                const rotation = Math.sin(rotationAngle) * 0.0873;
 
-            for (let i = 0; i <= gridSize; i++) {
-                const t = i / gridSize;
-                const startX = centerX - (gridWidth / 2) * (1 - t * perspective);
-                const endX = centerX + (gridWidth / 2) * (1 - t * perspective);
-                const y = centerY - (gridHeight * t);
+                for (let i = 0; i <= gridSize; i++) {
+                    const t = i / gridSize;
+                    const startX = centerX - (gridWidth / 2) * (1 - t * perspective);
+                    const endX = centerX + (gridWidth / 2) * (1 - t * perspective);
+                    const y = centerY - (gridHeight * t);
 
-                ctx.beginPath();
-                ctx.strokeStyle = `rgba(255, ${Math.floor(128 - t * 128)}, ${Math.floor(128 - t * 128)}, 0.3)`;
-                ctx.lineWidth = 0.5;
-                const startXRot = startX + (startX - centerX) * rotation;
-                const endXRot = endX + (endX - centerX) * rotation;
-                ctx.moveTo(startXRot, y);
-                ctx.lineTo(endXRot, y);
-                ctx.stroke();
-            }
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(255, ${Math.floor(128 - t * 128)}, ${Math.floor(128 - t * 128)}, 0.3)`;
+                    ctx.lineWidth = 0.5;
+                    const startXRot = startX + (startX - centerX) * rotation;
+                    const endXRot = endX + (endX - centerX) * rotation;
+                    ctx.moveTo(startXRot, y);
+                    ctx.lineTo(endXRot, y);
+                    ctx.stroke();
+                }
 
-            for (let i = 0; i <= gridSize; i++) {
-                const t = i / gridSize;
-                const x = centerX - (gridWidth / 2) * (1 - t * perspective) + (t * gridWidth * rotation);
-                const x2 = centerX + (gridWidth / 2) * (1 - t * perspective) + (t * gridWidth * rotation);
-                const startY = centerY - (gridHeight * t);
-                const endY = centerY;
+                for (let i = 0; i <= gridSize; i++) {
+                    const t = i / gridSize;
+                    const x = centerX - (gridWidth / 2) * (1 - t * perspective) + (t * gridWidth * rotation);
+                    const x2 = centerX + (gridWidth / 2) * (1 - t * perspective) + (t * gridWidth * rotation);
+                    const startY = centerY - (gridHeight * t);
+                    const endY = centerY;
 
-                ctx.beginPath();
-                ctx.strokeStyle = `rgba(255, ${Math.floor(128 - t * 128)}, ${Math.floor(128 - t * 128)}, 0.3)`;
-                ctx.lineWidth = 0.5;
-                ctx.moveTo(x, startY);
-                ctx.lineTo(x2, endY);
-                ctx.stroke();
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(255, ${Math.floor(128 - t * 128)}, ${Math.floor(128 - t * 128)}, 0.3)`;
+                    ctx.lineWidth = 0.5;
+                    ctx.moveTo(x, startY);
+                    ctx.lineTo(x2, endY);
+                    ctx.stroke();
+                }
+            } catch (err) {
+                console.error('Error in draw3DGrid:', err);
             }
         }
 
         function drawXYGrid() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            if (!ctx) {
+                console.error('Canvas context is null, cannot draw XY grid');
+                return;
+            }
+            try {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            drawWaveform();
-            draw3DGrid();
+                drawWaveform();
+                draw3DGrid();
 
-            ctx.beginPath();
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.lineWidth = 1;
-            ctx.moveTo(touchX, 0);
-            ctx.lineTo(touchX, canvas.height);
-            ctx.moveTo(0, touchY);
-            ctx.lineTo(canvas.width, touchY);
-            ctx.stroke();
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.lineWidth = 1;
+                ctx.moveTo(touchX, 0);
+                ctx.lineTo(touchX, canvas.height);
+                ctx.moveTo(0, touchY);
+                ctx.lineTo(canvas.width, touchY);
+                ctx.stroke();
 
-            ctx.beginPath();
-            ctx.arc(touchX, touchY, 5, 0, Math.PI * 2);
-            ctx.fillStyle = '#00f';
-            ctx.shadowColor = '#00f';
-            ctx.shadowBlur = 10;
-            ctx.fill();
-            ctx.shadowBlur = 0;
+                ctx.beginPath();
+                ctx.arc(touchX, touchY, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#00f';
+                ctx.shadowColor = '#00f';
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0;
 
-            requestAnimationFrame(drawXYGrid);
+                console.log(`Drawing XY grid: dot at (${touchX.toFixed(2)}, ${touchY.toFixed(2)})`);
+                requestAnimationFrame(drawXYGrid);
+            } catch (err) {
+                console.error('Error in drawXYGrid:', err);
+                ctx.fillStyle = 'red';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                console.log('Fallback: Filled canvas with red');
+            }
         }
 
         function testSound() {
@@ -570,17 +638,20 @@
         }
 
         function startAudioContext() {
-            if (audioContext.state === 'suspended') {
-                audioContext.resume().then(() => {
-                    console.log('AudioContext resumed successfully');
-                    drawXYGrid();
-                    testSound();
-                }).catch(err => {
-                    console.error('AudioContext resume failed:', err);
-                    alert('Failed to start audio. Please try tapping a pad or refreshing the page.');
-                });
-            } else {
-                console.log('AudioContext state:', audioContext.state);
+            try {
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume().then(() => {
+                        console.log('AudioContext resumed successfully');
+                        testSound();
+                    }).catch(err => {
+                        console.error('AudioContext resume failed:', err);
+                        alert('Failed to start audio. Please try tapping a pad or refreshing the page.');
+                    });
+                } else {
+                    console.log('AudioContext state:', audioContext.state);
+                }
+            } catch (err) {
+                console.error('Error in startAudioContext:', err);
             }
         }
 
@@ -796,7 +867,7 @@
             else if (mode === 'down') sequence = [...arpNotes].reverse();
             else if (mode === 'up-down') sequence = [...arpNotes, ...[...arpNotes].reverse()];
             else if (mode === 'random') sequence = [...arpNotes].sort(() => Math.random() - 0.5);
-            else if (mode === 'long') sequence = [...arpNotes];
+            else if (mode == 'long') sequence = [...arpNotes];
 
             return { sequence, mode };
         }
@@ -898,6 +969,15 @@
                 console.log('Song changed');
             }
         });
+
+        // Start XY grid rendering immediately
+        try {
+            drawXYGrid();
+            console.log('Initial drawXYGrid called');
+        } catch (err) {
+            console.error('Failed to start XY grid rendering:', err);
+            alert('Failed to render XY grid. Check console for details.');
+        }
     </script>
 </body>
 </html>
