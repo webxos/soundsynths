@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Mythical Synth - Dungeon Symphony: Create immersive dungeon synth music with an arcade RPG-style interface. Features celestial keys, ancient percussion, arpeggiators, and ambient dungeon sounds for musicians and producers.">
-    <meta name="keywords" content="dungeon synth, music production, synthesizer, arcade synth, RPG music, ambient music, electronic music, sound design, 2025 synth, mythical synth, celestial keys, ancient percussion">
+    <meta name="description" content="Mythical Synth - Dungeon Symphony: Create immersive dungeon synth music with an arcade RPG-style interface. Features celestial keys, ethereal percussion, arpeggiators, and ambient dungeon sounds for musicians.">
+    <meta name="keywords" content="dungeon synth, music production, synthesizer, arcade synth, RPG music, ambient music, electronic music, sound design, 2025 synth, mythical synth, celestial keys, ethereal percussion">
     <meta name="author" content="Sound Synths">
     <meta name="robots" content="index, follow">
     <meta name="application-name" content="Mythical Synth - Dungeon Symphony">
     <meta property="og:title" content="Mythical Synth - Dungeon Symphony">
-    <meta property="og:description" content="Craft epic dungeon synth tracks with an arcade-style interface, featuring celestial keys, ambient dungeon sounds, and advanced controls for music production.">
+    <meta property="og:description" content="Craft epic dungeon synth tracks with an arcade-style interface, featuring celestial keys, ethereal sounds, and advanced controls for music production.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://mythicalsynth.example.com">
     <meta property="og:image" content="https://mythicalsynth.example.com/images/synth-logo.jpg">
@@ -33,18 +33,27 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between;
             overflow: hidden;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
         }
-        header {
+        .wrapper {
+            width: 100%;
+            max-width: 550px;
+            margin: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
             padding: 10px;
+        }
+        header {
             text-align: center;
+            padding: 8px;
         }
         h1 {
-            font-size: clamp(18px, 4.5vw, 22px);
+            font-size: clamp(16px, 4vw, 20px);
             text-shadow: 
                 0 0 8px #00ffcc, 
                 0 0 12px #ff00ff, 
@@ -58,22 +67,20 @@
             background: linear-gradient(145deg, #1a1a2e, #2e2e47);
             border: 2px solid #00ffcc;
             border-radius: 8px;
-            padding: 10px;
-            width: 100%;
-            max-width: 600px;
-            box-shadow: 0 0 15px #00ffcc, inset 0 0 8px #ff00ff;
+            padding: 8px;
+            box-shadow: 0 0 12px #00ffcc, inset 0 0 6px #ff00ff;
         }
         .drum-rack h2, .synth-keys-container h2, .controls h2 {
-            font-size: clamp(10px, 2.5vw, 14px);
-            margin: 0 0 8px 0;
+            font-size: clamp(9px, 2.2vw, 12px);
+            margin: 0 0 6px 0;
             color: #ff00ff;
-            text-shadow: 0 0 5px #00ffcc;
+            text-shadow: 0 0 4px #00ffcc;
         }
         .drum-pads {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-            gap: 6px;
-            padding: 5px;
+            grid-template-columns: repeat(auto-fit, minmax(55px, 1fr));
+            gap: 5px;
+            padding: 4px;
         }
         .drum-pad {
             aspect-ratio: 1;
@@ -84,15 +91,15 @@
             justify-content: center;
             cursor: pointer;
             border: 2px solid #00ffcc;
-            border-radius: 5px;
-            font-size: clamp(8px, 2vw, 10px);
-            text-shadow: 0 0 3px #ff00ff;
+            border-radius: 4px;
+            font-size: clamp(7px, 1.8vw, 9px);
+            text-shadow: 0 0 2px #ff00ff;
             transition: transform 0.1s, box-shadow 0.1s;
             touch-action: manipulation;
         }
         .drum-pad:hover, .drum-pad:focus {
             transform: scale(1.05);
-            box-shadow: 0 0 10px #00ffcc;
+            box-shadow: 0 0 8px #00ffcc;
         }
         .drum-pad:active {
             transform: scale(0.95);
@@ -100,15 +107,15 @@
         }
         .synth-keys-container {
             overflow-x: auto;
-            padding-bottom: 5px;
+            padding-bottom: 4px;
         }
         .synth-keys {
             display: flex;
-            height: 100px;
+            height: 90px;
             min-width: fit-content;
         }
         .key {
-            flex: 0 0 28px;
+            flex: 0 0 26px;
             height: 100%;
             border: 1px solid #00ffcc;
             cursor: pointer;
@@ -119,10 +126,10 @@
             background: linear-gradient(#e6e6fa, #b0b0cc);
         }
         .black {
-            flex: 0 0 16px;
-            height: 60px;
+            flex: 0 0 15px;
+            height: 55px;
             background: linear-gradient(#2e2e47, #1a1a2e);
-            margin: 0 -8px;
+            margin: 0 -7.5px;
             position: relative;
             z-index: 1;
         }
@@ -135,24 +142,30 @@
         .controls {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            padding: 10px;
+            gap: 8px;
+            padding: 8px;
         }
         button, select, input[type="range"] {
-            padding: 8px;
-            font-size: clamp(10px, 2.5vw, 12px);
+            padding: 7px;
+            font-size: clamp(9px, 2.2vw, 11px);
             background: linear-gradient(145deg, #4a4e69, #2e2e47);
             color: #e6e6fa;
             border: 2px solid #00ffcc;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
             transition: transform 0.1s, box-shadow 0.1s;
-            text-shadow: 0 0 3px #ff00ff;
+            text-shadow: 0 0 2px #ff00ff;
             touch-action: manipulation;
+        }
+        select#keyboard-type {
+            background: #1a1a2e;
+            font-size: clamp(10px, 2.5vw, 12px);
+            padding: 8px;
+            box-shadow: 0 0 5px #00ffcc;
         }
         button:hover, button:focus, select:hover, select:focus, input[type="range"]:hover, input[type="range"]:focus {
             transform: scale(1.05);
-            box-shadow: 0 0 10px #00ffcc;
+            box-shadow: 0 0 8px #00ffcc;
         }
         #arp-toggle.active {
             background: #ff00ff;
@@ -161,23 +174,23 @@
         .autoplay-controls {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
             justify-content: center;
             align-items: center;
         }
         .bpm-selector {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
         .bpm-selector label {
-            font-size: clamp(10px, 2.5vw, 12px);
+            font-size: clamp(9px, 2.2vw, 11px);
             color: #e6e6fa;
-            text-shadow: 0 0 3px #ff00ff;
+            text-shadow: 0 0 2px #ff00ff;
         }
         .xy-grid {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             background: #1a1a2e;
             border: 2px solid #00ffcc;
             position: relative;
@@ -185,47 +198,50 @@
             touch-action: none;
         }
         .xy-cursor {
-            width: 8px;
-            height: 8px;
+            width: 7px;
+            height: 7px;
             background: #ff00ff;
             border-radius: 50%;
             position: absolute;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 5px #00ffcc;
+            box-shadow: 0 0 4px #00ffcc;
         }
         footer {
             position: fixed;
             bottom: 0;
             width: 100%;
             text-align: center;
-            padding: 8px;
+            padding: 7px;
             background: linear-gradient(145deg, #1a1a2e, #2e2e47);
             border-top: 2px solid #00ffcc;
             color: #e6e6fa;
-            font-size: clamp(8px, 2vw, 10px);
-            text-shadow: 0 0 3px #ff00ff;
+            font-size: clamp(7px, 1.8vw, 9px);
+            text-shadow: 0 0 2px #ff00ff;
             z-index: 10;
         }
         @media (max-width: 600px) {
+            .wrapper {
+                padding: 8px;
+            }
             .drum-pads {
-                grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
             }
             .key {
-                flex: 0 0 24px;
+                flex: 0 0 22px;
             }
             .black {
-                flex: 0 0 14px;
-                margin: 0 -7px;
+                flex: 0 0 12px;
+                margin: 0 -6px;
             }
             .synth-keys {
-                height: 80px;
+                height: 70px;
             }
             .xy-grid {
-                width: 60px;
-                height: 60px;
+                width: 55px;
+                height: 55px;
             }
             h1 {
-                font-size: clamp(16px, 4vw, 18px);
+                font-size: clamp(14px, 3.5vw, 16px);
             }
         }
     </style>
@@ -235,70 +251,70 @@
         <h1>Mythical Synth - Dungeon Symphony</h1>
     </header>
 
-    <div class="drum-rack">
-        <h2>Ancient Percussion</h2>
-        <div class="drum-pads">
-            <div class="drum-pad" data-note="war-drum">War Drum</div>
-            <div class="drum-pad" data-note="gong">Gong</div>
-            <div class="drum-pad" data-note="chime">Chime</div>
-            <div class="drum-pad" data-note="rattle">Rattle</div>
-            <div class="drum-pad" data-note="deep-bell">Deep Bell</div>
-            <div class="drum-pad" data-note="chain">Chain</div>
-            <div class="drum-pad" data-note="scream">Scream</div>
-            <div class="drum-pad" data-note="rumble">Rumble</div>
-        </div>
-    </div>
-
-    <div class="synth-keys-container">
-        <h2>Celestial Keys (C3-C5)</h2>
-        <select id="keyboard-type">
-            <option value="organ">Organ</option>
-            <option value="harpsichord">Harpsichord</option>
-            <option value="choir">Choir</option>
-            <option value="strings">Strings</option>
-            <option value="bell">Bell</option>
-        </select>
-        <div class="synth-keys" id="synth-keys">
-            <!-- Keys populated by JavaScript -->
-        </div>
-    </div>
-
-    <div class="controls">
-        <h2>Controls</h2>
-        <div class="autoplay-controls">
-            <button id="autoplay">Start Symphony</button>
-            <button id="arp-toggle">Arp Off</button>
-            <select id="arp-speed">
-                <option value="0.125">Very Fast</option>
-                <option value="0.25">Swift</option>
-                <option value="0.5" selected>Moderate</option>
-                <option value="1">Solemn</option>
-                <option value="2">Very Slow</option>
-            </select>
-            <select id="arp-mode">
-                <option value="up">Up</option>
-                <option value="down">Down</option>
-                <option value="up-down">Up-Down</option>
-                <option value="random">Random</option>
-                <option value="long">Long Sequence</option>
-            </select>
-            <select id="song-select">
-                <option value="dungeon">Dungeon Depths</option>
-                <option value="crypt">Crypt Whispers</option>
-                <option value="forest">Enchanted Forest</option>
-            </select>
-            <div class="bpm-selector">
-                <label for="bpm">BPM: <span id="bpm-value">80</span></label>
-                <input type="range" id="bpm" min="40" max="160" value="80">
+    <div class="wrapper">
+        <div class="drum-rack">
+            <h2>Ethereal Percussion</h2>
+            <div class="drum-pads">
+                <div class="drum-pad" data-note="astral-wave">Astral Wave</div>
+                <div class="drum-pad" data-note="gong">Gong</div>
+                <div class="drum-pad" data-note="chime">Chime</div>
+                <div class="drum-pad" data-note="crystal-shard">Crystal Shard</div>
+                <div class="drum-pad" data-note="deep-bell">Deep Bell</div>
+                <div class="drum-pad" data-note="chain">Chain</div>
+                <div class="drum-pad" data-note="scream">Scream</div>
+                <div class="drum-pad" data-note="ethereal-pulse">Ethereal Pulse</div>
             </div>
-            <div class="xy-grid" id="xy-grid">
-                <div class="xy-cursor" id="xy-cursor"></div>
+        </div>
+
+        <div class="synth-keys-container">
+            <h2>Celestial Keys (C3-C5)</h2>
+            <select id="keyboard-type">
+                <option value="organ">Organ</option>
+                <option value="harpsichord">Harpsichord</option>
+                <option value="choir">Choir</option>
+                <option value="strings">Strings</option>
+                <option value="bell">Bell</option>
+            </select>
+            <div class="synth-keys" id="synth-keys"></div>
+        </div>
+
+        <div class="controls">
+            <h2>Controls</h2>
+            <div class="autoplay-controls">
+                <button id="autoplay">Start Symphony</button>
+                <button id="arp-toggle">Arp Off</button>
+                <select id="arp-speed">
+                    <option value="0.125">Very Fast</option>
+                    <option value="0.25">Swift</option>
+                    <option value="0.5" selected>Moderate</option>
+                    <option value="1">Solemn</option>
+                    <option value="2">Very Slow</option>
+                </select>
+                <select id="arp-mode">
+                    <option value="up">Up</option>
+                    <option value="down">Down</option>
+                    <option value="up-down">Up-Down</option>
+                    <option value="random">Random</option>
+                    <option value="long">Long Sequence</option>
+                </select>
+                <select id="song-select">
+                    <option value="dungeon">Dungeon Depths</option>
+                    <option value="crypt">Crypt Whispers</option>
+                    <option value="forest">Enchanted Forest</option>
+                </select>
+                <div class="bpm-selector">
+                    <label for="bpm">BPM: <span id="bpm-value">80</span></label>
+                    <input type="range" id="bpm" min="40" max="160" value="80">
+                </div>
+                <div class="xy-grid" id="xy-grid">
+                    <div class="xy-cursor" id="xy-cursor"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <footer>
-        &copy; 2025 Sound Synths. All rights reserved.
+        © 2025 Sound Synths. All rights reserved.
     </footer>
 
     <script>
@@ -333,7 +349,7 @@
         }
         setupReverb();
 
-        // Drum Sounds (Louder, Distinct)
+        // Drum Sounds
         function playDrum(note) {
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
@@ -342,12 +358,12 @@
             reverb.connect(gainNodeMaster);
 
             switch (note) {
-                case 'war-drum':
-                    oscillator.type = 'sine';
-                    oscillator.frequency.setValueAtTime(100, audioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
-                    gainNode.gain.setValueAtTime(1.2, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
+                case 'astral-wave':
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 1.0);
+                    gainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.0);
                     break;
                 case 'gong':
                     oscillator.type = 'triangle';
@@ -361,11 +377,12 @@
                     gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.6);
                     break;
-                case 'rattle':
-                    oscillator.type = 'square';
-                    oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
-                    gainNode.gain.setValueAtTime(0.6, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+                case 'crystal-shard':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(2000, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.5);
+                    gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
                     break;
                 case 'deep-bell':
                     oscillator.type = 'sine';
@@ -387,11 +404,12 @@
                     gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.7);
                     break;
-                case 'rumble':
-                    oscillator.type = 'sine';
-                    oscillator.frequency.setValueAtTime(60, audioContext.currentTime);
-                    gainNode.gain.setValueAtTime(1.1, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.0);
+                case 'ethereal-pulse':
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.setValueAtTime(100, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(20, audioContext.currentTime + 1.2);
+                    gainNode.gain.setValueAtTime(0.9, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.2);
                     break;
             }
             oscillator.start();
@@ -485,7 +503,7 @@
         const songSelect = document.getElementById('song-select');
         const bpmInput = document.getElementById('bpm');
         const bpmValue = document.getElementById('bpm-value');
-        const drumTypes = ['war-drum', 'gong', 'chime', 'rattle', 'deep-bell', 'chain', 'scream', 'rumble'];
+        const drumTypes = ['astral-wave', 'gong', 'chime', 'crystal-shard', 'deep-bell', 'chain', 'scream', 'ethereal-pulse'];
 
         // A Minor Scale (C3 to C5 subset)
         const aMinorScale = [
@@ -634,11 +652,8 @@
             const posY = Math.max(0, Math.min(y - rect.top, rect.height));
             xyCursor.style.left = `${posX}px`;
             xyCursor.style.top = `${posY}px`;
-            // Map to EQ (low-pass filter) and volume
-            const filterFreq = 200 + (posX / rect.width) * 4800; // 200-5000 Hz
-            const volume = 0.2 + (1 - posY / rect.height) * 0.8; // 0.2-1.0
+            const volume = 0.2 + (1 - posY / rect.height) * 0.8;
             gainNodeMaster.gain.setValueAtTime(volume, audioContext.currentTime);
-            // Note: Filter implementation simplified; real EQ would require BiquadFilterNode
         }
 
         xyGrid.addEventListener('mousedown', (e) => {
