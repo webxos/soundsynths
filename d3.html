@@ -391,12 +391,13 @@
         let isDragging = false;
         let touchX = canvas.width / 2;
         let touchY = canvas.height / 2;
+        let rotationAngle = 0;
 
         function getMousePos(event) {
             const rect = canvas.getBoundingClientRect();
             return {
-                x: event.clientX - rect.left,
-                y: event.clientY - rect.top
+                x: Math.max(0, Math.min(canvas.width, event.clientX - rect.left)),
+                y: Math.max(0, Math.min(canvas.height, event.clientY - rect.top))
             };
         }
 
@@ -404,8 +405,8 @@
             const rect = canvas.getBoundingClientRect();
             const touch = event.touches[0];
             return {
-                x: touch.clientX - rect.left,
-                y: touch.clientY - rect.top
+                x: Math.max(0, Math.min(canvas.width, touch.clientX - rect.left)),
+                y: Math.max(0, Math.min(canvas.height, touch.clientY - rect.top))
             };
         }
 
@@ -481,23 +482,63 @@
             ctx.stroke();
         }
 
+        function draw3DGrid() {
+            const gridSize = 10;
+            const perspective = 0.4;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height * 0.8;
+            const gridWidth = canvas.width * 0.8;
+            const gridHeight = canvas.height * 0.6;
+
+            rotationAngle += 0.01;
+            const rotation = Math.sin(rotationAngle) * 0.0873;
+
+            for (let i = 0; i <= gridSize; i++) {
+                const t = i / gridSize;
+                const startX = centerX - (gridWidth / 2) * (1 - t * perspective);
+                const endX = centerX + (gridWidth / 2) * (1 - t * perspective);
+                const y = centerY - (gridHeight * t);
+
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(255, ${Math.floor(128 - t * 128)}, ${Math.floor(128 - t * 128)}, 0.3)`;
+                ctx.lineWidth = 0.5;
+                const startXRot = startX + (startX - centerX) * rotation;
+                const endXRot = endX + (endX - centerX) * rotation;
+                ctx.moveTo(startXRot, y);
+                ctx.lineTo(endXRot, y);
+                ctx.stroke();
+            }
+
+            for (let i = 0; i <= gridSize; i++) {
+                const t = i / gridSize;
+                const x = centerX - (gridWidth / 2) * (1 - t * perspective) + (t * gridWidth * rotation);
+                const x2 = centerX + (gridWidth / 2) * (1 - t * perspective) + (t * gridWidth * rotation);
+                const startY = centerY - (gridHeight * t);
+                const endY = centerY;
+
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(255, ${Math.floor(128 - t * 128)}, ${Math.floor(128 - t * 128)}, 0.3)`;
+                ctx.lineWidth = 0.5;
+                ctx.moveTo(x, startY);
+                ctx.lineTo(x2, endY);
+                ctx.stroke();
+            }
+        }
+
         function drawXYGrid() {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             drawWaveform();
+            draw3DGrid();
 
             ctx.beginPath();
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.lineWidth = 0.5;
-            for (let i = 1; i <= 5; i++) {
-                const x = (i / 5) * canvas.width;
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                const y = (i / 5) * canvas.height;
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-            }
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.moveTo(touchX, 0);
+            ctx.lineTo(touchX, canvas.height);
+            ctx.moveTo(0, touchY);
+            ctx.lineTo(canvas.width, touchY);
             ctx.stroke();
 
             ctx.beginPath();
