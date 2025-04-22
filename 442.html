@@ -660,13 +660,13 @@
                 patterns[track] = new Array(steps).fill(false);
                 for (let i = 0; i < steps; i++) {
                     if (track === 'kick') {
-                        if (i % 4 === 0) patterns[track][i] = true;
+                        patterns[track][i] = i % 4 === 0; // Ensure four-on-the-floor
                         if (drumComplexity > 0.5 && (i % 4 === 2) && Math.random() > 0.7) patterns[track][i] = true;
                     } else if (track === 'clap') {
-                        if (i % 8 === 4) patterns[track][i] = true;
+                        patterns[track][i] = i % 8 === 4; // Claps on 2 and 4
                         if (drumComplexity > 0.6 && (i % 8 === 6) && Math.random() > 0.6) patterns[track][i] = true;
                     } else if (track === 'hihat') {
-                        if (i % 2 === 0) patterns[track][i] = drumComplexity > 0.2;
+                        patterns[track][i] = i % 2 === 0 && drumComplexity > 0.2;
                         if (drumComplexity > 0.5 && Math.random() > 0.7) patterns[track][i] = true;
                     } else if (track === 'perc') {
                         if ((i % 4 === 1 || i % 4 === 3) && Math.random() > (0.8 - drumComplexity * 0.4)) patterns[track][i] = true;
@@ -679,6 +679,8 @@
                     }
                 }
             });
+            // Ensure at least one kick to prevent silent loops
+            patterns['kick'][0] = true;
             console.log("Generated patterns:", patterns);
         }
 
@@ -690,7 +692,7 @@
                     if (isolateSynths && !(track === 'synth1' || track === 'bass')) return;
 
                     const noteTime = time + (track === 'synth1' ? 0.005 * Math.random() : 0);
-                    console.log(`Scheduling ${track} at time ${noteTime}`);
+                    console.log(`Scheduling ${track} at time ${noteTime}, step ${currentStep}`);
                     if (track === 'synth1') {
                         const synthType = document.getElementById('synthSelect').value;
                         const freq = synthFrequencies[synthType][Math.floor(Math.random() * 3)];
@@ -704,16 +706,24 @@
                 }
             });
             currentStep = (currentStep + 1) % steps;
+            console.log(`Advancing to step ${currentStep}`);
         }
 
         function scheduler() {
-            if (!isPlaying) return;
+            if (!isPlaying) {
+                console.log("Scheduler stopped: isPlaying is false");
+                return;
+            }
             initAudio();
+            if (ctx.state === 'suspended') {
+                ctx.resume().then(() => console.log("AudioContext resumed in scheduler"));
+            }
             const bpm = parseInt(document.getElementById('bpmSelect').value);
-            const noteTime = (60 / bpm) / 4;
+            const noteTime = (60 / bpm) / 4; // 16th note duration
             while (nextNoteTime < ctx.currentTime + scheduleAheadTime) {
                 scheduleNote(nextNoteTime);
                 nextNoteTime += noteTime;
+                console.log(`Scheduled note at ${nextNoteTime}`);
             }
             requestAnimationFrame(scheduler);
         }
@@ -721,12 +731,16 @@
         function generateLoop() {
             console.log("Generating loop");
             initAudio();
+            if (ctx.state === 'suspended') {
+                ctx.resume().then(() => console.log("AudioContext resumed in generateLoop"));
+            }
             stopLoop();
             isPlaying = true;
             generatePatterns();
             nextNoteTime = ctx.currentTime + 0.1;
             currentStep = 0;
             scheduler();
+            console.log("Loop generation started");
         }
 
         function stopLoop() {
@@ -779,6 +793,7 @@
         const synthSelect = document.getElementById('synthSelect');
         if (synthSelect) {
             synthSelect.addEventListener('change', () => {
+                console.log(`Synth changed to ${synthSelect.value}`);
                 if (isPlaying) generateLoop();
             }, { passive: false });
         } else {
