@@ -47,7 +47,7 @@
             flex-wrap: wrap;
             justify-content: center;
         }
-        .eq-grid, .beat-grid {
+        .eqGrid, .beatGrid {
             width: 200px;
             height: 200px;
             position: relative;
@@ -60,7 +60,7 @@
             border: 2px solid #00aaff;
             cursor: crosshair;
         }
-        .eq-cursor, .beat-cursor {
+        .eqCursor, .beatCursor {
             position: absolute;
             width: 6px;
             height: 6px;
@@ -114,7 +114,7 @@
             .control-buttons {
                 gap: 5px;
             }
-            .eq-grid, .beat-grid {
+            .eqGrid, .beatGrid {
                 width: 150px;
                 height: 150px;
             }
@@ -136,10 +136,10 @@
         <div class="control-buttons">
             <button onclick="generateLoop()">Generate Loop</button>
             <button onclick="stopLoop()">Stop Loop</button>
-            <button id="isolate-drums" onclick="toggleIsolateDrums()">Isolate Drums</button>
-            <button id="isolate-synths" onclick="toggleIsolateSynths()">Isolate Synths</button>
+            <button id="isolateDrums" onclick="toggleIsolateDrums()">Isolate Drums</button>
+            <button id="isolateSynths" onclick="toggleIsolateSynths()">Isolate Synths</button>
             <button onclick="tapTempo()">Tap Tempo</button>
-            <select id="bpm-select">
+            <select id="bpmSelect">
                 <option value="100">100 BPM</option>
                 <option value="105">105 BPM</option>
                 <option value="110">110 BPM</option>
@@ -150,7 +150,7 @@
                 <option value="126">126 BPM</option>
                 <option value="128">128 BPM</option>
             </select>
-            <select id="synth-select">
+            <select id="synthSelect">
                 <option value="DeepPulse">DeepPulse (Bass)</option>
                 <option value="NeonDrift">NeonDrift (Bass)</option>
                 <option value="SkyVolt">SkyVolt (Pad)</option>
@@ -158,11 +158,11 @@
                 <option value="StarPluck">StarPluck (Pluck)</option>
             </select>
         </div>
-        <div class="eq-grid" id="eq-grid">
-            <div class="eq-cursor" id="eq-cursor"></div>
+        <div class="eqGrid" id="eqGrid">
+            <div class="eqCursor" id="eqCursor"></div>
         </div>
-        <div class="beat-grid" id="beat-grid">
-            <div class="beat-cursor" id="beat-cursor"></div>
+        <div class="beatGrid" id="beatGrid">
+            <div class="beatCursor" id="beatCursor"></div>
         </div>
     </section>
     <section class="visualizer">
@@ -181,8 +181,8 @@
         let synthComplexity = 0.5; // 0 (simple) to 1 (complex)
 
         function initAudio() {
-            try {
-                if (!ctx || ctx.state === 'closed') {
+            if (!ctx || ctx.state === 'closed') {
+                try {
                     ctx = new (window.AudioContext || window.webkitAudioContext)();
                     lowPassFilter = ctx.createBiquadFilter();
                     lowPassFilter.type = 'lowpass';
@@ -198,21 +198,25 @@
                     analyser = ctx.createAnalyser();
                     analyser.fftSize = 32;
                     limiter.connect(analyser);
-                    console.log("AudioContext initialized successfully");
+                    console.log("AudioContext initialized");
+                } catch (e) {
+                    console.error("AudioContext initialization failed:", e);
                 }
-                if (ctx.state === 'suspended') {
-                    ctx.resume().then(() => console.log("AudioContext resumed"));
-                }
-            } catch (e) {
-                console.error("Failed to initialize AudioContext:", e);
+            }
+            if (ctx.state === 'suspended') {
+                ctx.resume().then(() => console.log("AudioContext resumed"));
             }
         }
 
         function createSound(type, freq = 440, velocity = 1) {
             initAudio();
+            if (!ctx) {
+                console.error("AudioContext not initialized");
+                return;
+            }
             const now = ctx.currentTime;
             const masterGain = ctx.createGain();
-            masterGain.gain.setValueAtTime(velocity, now);
+            masterGain.gain.setValueAtTime(velocity * 0.8, now); // Slightly reduced gain
             masterGain.connect(lowPassFilter);
 
             if (type === 'kick') {
@@ -221,7 +225,7 @@
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(120, now);
                 osc.frequency.exponentialRampToValueAtTime(40, now + 0.2);
-                gain.gain.setValueAtTime(0.8 * velocity, now);
+                gain.gain.setValueAtTime(1.0 * velocity, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
                 osc.connect(gain);
                 gain.connect(masterGain);
@@ -244,7 +248,7 @@
                 noise.connect(filter);
                 filter.connect(gain);
                 gain.connect(masterGain);
-                gain.gain.setValueAtTime(0.6 * velocity, now);
+                gain.gain.setValueAtTime(0.7 * velocity, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
                 noise.start(now);
                 noise.stop(now + 0.15);
@@ -266,7 +270,7 @@
                 noise.connect(filter);
                 filter.connect(gain);
                 gain.connect(masterGain);
-                gain.gain.setValueAtTime(0.15 * velocity, now);
+                gain.gain.setValueAtTime(0.2 * velocity, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
                 noise.start(now);
                 noise.stop(now + 0.03);
@@ -280,7 +284,7 @@
                 const gain = ctx.createGain();
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(600, now);
-                gain.gain.setValueAtTime(0.1 * velocity, now);
+                gain.gain.setValueAtTime(0.15 * velocity, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
                 osc.connect(gain);
                 gain.connect(masterGain);
@@ -298,7 +302,7 @@
                 osc.frequency.setValueAtTime(freq, now);
                 filter.type = 'lowpass';
                 filter.frequency.setValueAtTime(150, now);
-                gain.gain.setValueAtTime(0.2 * velocity, now);
+                gain.gain.setValueAtTime(0.25 * velocity, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
                 osc.connect(filter);
                 filter.connect(gain);
@@ -311,7 +315,7 @@
                     gain.disconnect();
                 };
             } else if (type.startsWith('synth')) {
-                const synthType = document.getElementById('synth-select').value;
+                const synthType = document.getElementById('synthSelect').value;
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 const filter = ctx.createBiquadFilter();
@@ -320,31 +324,31 @@
                     osc.type = 'sawtooth';
                     filter.type = 'lowpass';
                     filter.frequency.setValueAtTime(200, now);
-                    gain.gain.setValueAtTime(0.2 * velocity, now);
+                    gain.gain.setValueAtTime(0.25 * velocity, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
                 } else if (synthType === 'NeonDrift') {
                     osc.type = 'sine';
                     filter.type = 'lowpass';
                     filter.frequency.setValueAtTime(180, now);
-                    gain.gain.setValueAtTime(0.18 * velocity, now);
+                    gain.gain.setValueAtTime(0.2 * velocity, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
                 } else if (synthType === 'SkyVolt') {
                     osc.type = 'sawtooth';
                     filter.type = 'lowpass';
                     filter.frequency.setValueAtTime(400, now);
-                    gain.gain.setValueAtTime(0.15 * velocity, now);
+                    gain.gain.setValueAtTime(0.18 * velocity, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
                 } else if (synthType === 'MoonGlitch') {
                     osc.type = 'square';
                     filter.type = 'bandpass';
                     filter.frequency.setValueAtTime(800, now);
-                    gain.gain.setValueAtTime(0.12 * velocity, now);
+                    gain.gain.setValueAtTime(0.15 * velocity, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
                 } else if (synthType === 'StarPluck') {
                     osc.type = 'triangle';
                     filter.type = 'lowpass';
                     filter.frequency.setValueAtTime(1200, now);
-                    gain.gain.setValueAtTime(0.15 * velocity, now);
+                    gain.gain.setValueAtTime(0.18 * velocity, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
                 }
 
@@ -415,8 +419,8 @@
 
         // EQ and Resonance Grid (Top)
         function initEQGrid() {
-            const grid = document.getElementById('eq-grid');
-            const cursor = document.getElementById('eq-cursor');
+            const grid = document.getElementById('eqGrid');
+            const cursor = document.getElementById('eqCursor');
             if (!grid || !cursor) {
                 console.error("EQ grid or cursor not found");
                 return;
@@ -458,8 +462,8 @@
 
         // Complexity Grid (Bottom, Drums and Synths)
         function initBeatGrid() {
-            const grid = document.getElementById('beat-grid');
-            const cursor = document.getElementById('beat-cursor');
+            const grid = document.getElementById('beatGrid');
+            const cursor = document.getElementById('beatCursor');
             if (!grid || !cursor) {
                 console.error("Beat grid or cursor not found");
                 return;
@@ -499,8 +503,8 @@
 
         // Isolate Functions
         function toggleIsolateDrums() {
-            const drumsButton = document.getElementById('isolate-drums');
-            const synthsButton = document.getElementById('isolate-synths');
+            const drumsButton = document.getElementById('isolateDrums');
+            const synthsButton = document.getElementById('isolateSynths');
             if (isolateDrums) {
                 isolateDrums = false;
                 drumsButton.classList.remove('active');
@@ -513,8 +517,8 @@
         }
 
         function toggleIsolateSynths() {
-            const drumsButton = document.getElementById('isolate-drums');
-            const synthsButton = document.getElementById('isolate-synths');
+            const drumsButton = document.getElementById('isolateDrums');
+            const synthsButton = document.getElementById('isolateSynths');
             if (isolateSynths) {
                 isolateSynths = false;
                 synthsButton.classList.remove('active');
@@ -530,12 +534,13 @@
         let isPlaying = false;
         let nextNoteTime = 0;
         let currentStep = 0;
-        let scheduleAheadTime = 0.04; // 40ms lookahead
+        let scheduleAheadTime = 0.1; // Increased to 100ms for stability
         const tracks = ['kick', 'clap', 'hihat', 'perc', 'bass', 'synth1', 'synth2'];
         let patterns = {};
         let activeSynths = 0;
 
         function generatePatterns() {
+            console.log("Generating patterns with drumComplexity:", drumComplexity, "synthComplexity:", synthComplexity);
             const steps = window.innerWidth <= 600 ? 8 : 16;
             patterns = {};
             tracks.forEach(track => {
@@ -555,7 +560,7 @@
                         }
                     } else if (track === 'hihat') {
                         if (i % 2 === 0) {
-                            courts[track][i] = drumComplexity >= 0.3; // Steady hi-hats
+                            patterns[track][i] = drumComplexity >= 0.3; // Steady hi-hats
                         } else if (Math.random() > (0.6 - drumComplexity * 0.5)) {
                             patterns[track][i] = true; // Off-beat hi-hats
                         }
@@ -577,6 +582,7 @@
                     }
                 }
             });
+            console.log("Generated patterns:", patterns);
         }
 
         function scheduleNote(time) {
@@ -584,130 +590,6 @@
             activeSynths = 0;
             tracks.forEach(track => {
                 if (patterns[track][currentStep]) {
-                    if (isolateDrums && (track.startsWith('synth') || track === 'bass')) return;
-                    if (isolateSynths && !(track.startsWith('synth') || track === 'bass')) return;
+                    if (isolateDr...
 
-                    let noteTime = time;
-                    let offset = 0;
-                    if (track.startsWith('synth') && (patterns['kick'][currentStep] || patterns['clap'][currentStep])) {
-                        offset = 0.005 + Math.random() * 0.005;
-                        noteTime += offset;
-                    }
-
-                    if (track.startsWith('synth')) {
-                        if (activeSynths >= 1) return;
-                        activeSynths++;
-                        const synthType = document.getElementById('synth-select').value;
-                        const freq = synthFrequencies[synthType][Math.floor(Math.random() * 3)];
-                        createSound(track, freq, 1);
-                    } else if (track === 'bass') {
-                        const freq = synthFrequencies['bass'][Math.floor(Math.random() * 3)];
-                        createSound('bass', freq, 1);
-                    } else {
-                        createSound(track, 440, 1);
-                    }
-                }
-            });
-            currentStep = (currentStep + 1) % steps;
-        }
-
-        function scheduler() {
-            initAudio();
-            const bpm = parseInt(document.getElementById('bpm-select').value);
-            const noteTime = (60 / bpm) / 4;
-            while (nextNoteTime < ctx.currentTime + scheduleAheadTime) {
-                scheduleNote(nextNoteTime);
-                nextNoteTime += noteTime;
-            }
-            if (isPlaying) {
-                requestAnimationFrame(scheduler);
-            }
-        }
-
-        function generateLoop() {
-            stopLoop();
-            isPlaying = true;
-            generatePatterns();
-            nextNoteTime = ctx.currentTime;
-            currentStep = 0;
-            scheduler();
-        }
-
-        function stopLoop() {
-            isPlaying = false;
-            isolateDrums = false;
-            isolateSynths = false;
-            document.getElementById('isolate-drums').classList.remove('active');
-            document.getElementById('isolate-synths').classList.remove('active');
-        }
-
-        function tapTempo() {
-            const now = Date.now();
-            tapTimes.push(now);
-
-            if (tapTimes.length > 1 && now - tapTimes[tapTimes.length - 2] > maxTapInterval) {
-                tapTimes = [now];
-            }
-
-            if (tapTimes.length >= 2) {
-                const intervals = [];
-                for (let i = 1; i < tapTimes.length; i++) {
-                    intervals.push(tapTimes[i] - tapTimes[i - 1]);
-                }
-                const avgInterval = intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
-                const bpm = Math.round(60000 / avgInterval);
-                const constrainedBpm = Math.max(100, Math.min(128, bpm));
-                const bpmSelect = document.getElementById('bpm-select');
-                const options = Array.from(bpmSelect.options).map(opt => parseInt(opt.value));
-                const closestBpm = options.reduce((prev, curr) => 
-                    Math.abs(curr - constrainedBpm) < Math.abs(prev - constrainedBpm) ? curr : prev
-                );
-                bpmSelect.value = closestBpm;
-                if (isPlaying) {
-                    generateLoop();
-                }
-            }
-
-            if (tapTimes.length > 4) {
-                tapTimes.shift();
-            }
-        }
-
-        // Event Listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log("DOM loaded, initializing components");
-            try {
-                initVisualizer();
-                initEQGrid();
-                initBeatGrid();
-                generateLoop();
-            } catch (e) {
-                console.error("Initialization error:", e);
-            }
-
-            const synthSelect = document.getElementById('synth-select');
-            if (synthSelect) {
-                synthSelect.addEventListener('change', () => {
-                    if (isPlaying) generateLoop();
-                }, { passive: false });
-            } else {
-                console.error("Synth select element not found");
-            }
-
-            const bpmSelect = document.getElementById('bpm-select');
-            if (bpmSelect) {
-                bpmSelect.addEventListener('change', () => {
-                    if (isPlaying) generateLoop();
-                }, { passive: false });
-            } else {
-                console.error("BPM select element not found");
-            }
-        });
-
-        // Ensure AudioContext starts on user interaction
-        document.addEventListener('click', () => {
-            initAudio();
-        }, { once: true });
-    </script>
-</body>
-</html>
+Something went wrong, please refresh to reconnect or try again.
