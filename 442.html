@@ -649,50 +649,72 @@
         let isPlaying = false;
         let nextNoteTime = 0;
         let currentStep = 0;
+        let barCount = 0;
+        const stepsPerBar = 16; // 16 steps per bar (4/4, 16th notes)
+        const barsPerLoop = 16; // 16 bars per loop
+        const totalSteps = stepsPerBar * barsPerLoop; // 64 steps
         const scheduleAheadTime = 0.1;
         const tracks = ['kick', 'clap', 'hihat', 'perc', 'bass', 'synth1'];
         let patterns = {};
 
         function generatePatterns() {
-            const steps = window.innerWidth <= 600 ? 8 : 16;
             patterns = {};
             tracks.forEach(track => {
-                patterns[track] = new Array(steps).fill(false);
-                for (let i = 0; i < steps; i++) {
-                    if (track === 'kick') {
-                        patterns[track][i] = i % 4 === 0; // Ensure four-on-the-floor
-                        if (drumComplexity > 0.5 && (i % 4 === 2) && Math.random() > 0.7) patterns[track][i] = true;
-                    } else if (track === 'clap') {
-                        patterns[track][i] = i % 8 === 4; // Claps on 2 and 4
-                        if (drumComplexity > 0.6 && (i % 8 === 6) && Math.random() > 0.6) patterns[track][i] = true;
-                    } else if (track === 'hihat') {
-                        patterns[track][i] = i % 2 === 0 && drumComplexity > 0.2;
-                        if (drumComplexity > 0.5 && Math.random() > 0.7) patterns[track][i] = true;
-                    } else if (track === 'perc') {
-                        if ((i % 4 === 1 || i % 4 === 3) && Math.random() > (0.8 - drumComplexity * 0.4)) patterns[track][i] = true;
-                    } else if (track === 'bass') {
-                        if (patterns['kick'][i] || (i % 4 === 1 && Math.random() > (0.6 - drumComplexity * 0.4))) patterns[track][i] = true;
-                    } else if (track === 'synth1') {
-                        if ((i % 4 === 1 || i % 8 === 3 || i % 8 === 7) && Math.random() > (0.7 - synthComplexity * 0.5)) patterns[track][i] = true;
-                        if (synthComplexity > 0.8 && Math.random() > 0.9) patterns[track][i] = true;
-                        if (patterns[track].filter(x => x).length > 4) patterns[track][i] = false;
+                // Generate 4 bars (64 steps) with variations
+                patterns[track] = new Array(totalSteps).fill(false);
+                for (let bar = 0; bar < barsPerLoop; bar++) {
+                    const barOffset = bar * stepsPerBar;
+                    for (let i = 0; i < stepsPerBar; i++) {
+                        const step = barOffset + i;
+                        if (track === 'kick') {
+                            patterns[track][step] = i % 4 === 0; // Four-on-the-floor
+                            if (drumComplexity > 0.5 && (i % 4 === 2) && Math.random() > 0.7 && bar > 0) {
+                                patterns[track][step] = true; // Off-beat kicks in later bars
+                            }
+                        } else if (track === 'clap') {
+                            patterns[track][step] = i % 8 === 4; // Claps on 2 and 4
+                            if (drumComplexity > 0.6 && (i % 8 === 6) && Math.random() > 0.6 && bar > 1) {
+                                patterns[track][step] = true; // Syncopated claps in bars 2+
+                            }
+                        } else if (track === 'hihat') {
+                            patterns[track][step] = i % 2 === 0 && drumComplexity > 0.2;
+                            if (drumComplexity > 0.5 && Math.random() > 0.7 && bar > 0) {
+                                patterns[track][step] = true; // Extra hi-hats in later bars
+                            }
+                        } else if (track === 'perc') {
+                            if ((i % 4 === 1 || i % 4 === 3) && Math.random() > (0.8 - drumComplexity * 0.4) && bar > 1) {
+                                patterns[track][step] = true; // Perc in bars 2+
+                            }
+                        } else if (track === 'bass') {
+                            if (patterns['kick'][step] || (i % 4 === 1 && Math.random() > (0.6 - drumComplexity * 0.4))) {
+                                patterns[track][step] = true; // Bass follows kicks or off-beats
+                            }
+                        } else if (track === 'synth1') {
+                            if ((i % 4 === 1 || i % 8 === 3 || i % 8 === 7) && Math.random() > (0.7 - synthComplexity * 0.5) && bar > 0) {
+                                patterns[track][step] = true; // Synth stabs in bars 1+
+                            }
+                            if (synthComplexity > 0.8 && Math.random() > 0.9 && bar > 2) {
+                                patterns[track][step] = true; // Extra synth notes in bars 3+
+                            }
+                        }
                     }
                 }
             });
-            // Ensure at least one kick to prevent silent loops
-            patterns['kick'][0] = true;
+            // Ensure at least one kick per bar to prevent silent loops
+            for (let bar = 0; bar < barsPerLoop; bar++) {
+                patterns['kick'][bar * stepsPerBar] = true;
+            }
             console.log("Generated patterns:", patterns);
         }
 
         function scheduleNote(time) {
-            const steps = window.innerWidth <= 600 ? 8 : 16;
             tracks.forEach(track => {
                 if (patterns[track][currentStep]) {
                     if (isolateDrums && (track === 'synth1' || track === 'bass')) return;
                     if (isolateSynths && !(track === 'synth1' || track === 'bass')) return;
 
                     const noteTime = time + (track === 'synth1' ? 0.005 * Math.random() : 0);
-                    console.log(`Scheduling ${track} at time ${noteTime}, step ${currentStep}`);
+                    console.log(`Scheduling ${track} at time ${noteTime}, step ${currentStep}, bar ${barCount + 1}`);
                     if (track === 'synth1') {
                         const synthType = document.getElementById('synthSelect').value;
                         const freq = synthFrequencies[synthType][Math.floor(Math.random() * 3)];
@@ -705,8 +727,15 @@
                     }
                 }
             });
-            currentStep = (currentStep + 1) % steps;
-            console.log(`Advancing to step ${currentStep}`);
+            currentStep++;
+            if (currentStep >= totalSteps) {
+                currentStep = 0;
+                barCount = 0;
+                console.log("Completed 16-bar loop, restarting");
+            } else if (currentStep % stepsPerBar === 0) {
+                barCount++;
+                console.log(`Advancing to bar ${barCount + 1}`);
+            }
         }
 
         function scheduler() {
@@ -723,13 +752,13 @@
             while (nextNoteTime < ctx.currentTime + scheduleAheadTime) {
                 scheduleNote(nextNoteTime);
                 nextNoteTime += noteTime;
-                console.log(`Scheduled note at ${nextNoteTime}`);
+                console.log(`Scheduled note at ${nextNoteTime}, step ${currentStep}, bar ${barCount + 1}`);
             }
             requestAnimationFrame(scheduler);
         }
 
         function generateLoop() {
-            console.log("Generating loop");
+            console.log("Generating 16-bar loop");
             initAudio();
             if (ctx.state === 'suspended') {
                 ctx.resume().then(() => console.log("AudioContext resumed in generateLoop"));
@@ -739,6 +768,7 @@
             generatePatterns();
             nextNoteTime = ctx.currentTime + 0.1;
             currentStep = 0;
+            barCount = 0;
             scheduler();
             console.log("Loop generation started");
         }
@@ -761,14 +791,14 @@
             if (tapTimes.length >= 2) {
                 const intervals = [];
                 for (let i = 1; i < tapTimes.length; i++) {
-                    intervals.push(tapTimes[i] - tapTimes[i - 1]);
+ are                    intervals.push(tapTimes[i] - tapTimes[i - 1]);
                 }
                 const avgInterval = intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
                 const bpm = Math.round(60000 / avgInterval);
                 const constrainedBpm = Math.max(70, Math.min(140, bpm));
                 const bpmSelect = document.getElementById('bpmSelect');
                 const options = Array.from(bpmSelect.options).map(opt => parseInt(opt.value));
-                const closestBpm = options.reduce((prev, curr) => 
+                const closestBpm = options.reduce((prev, curr) =>
                     Math.abs(curr - constrainedBpm) < Math.abs(prev - constrainedBpm) ? curr : prev
                 );
                 bpmSelect.value = closestBpm;
