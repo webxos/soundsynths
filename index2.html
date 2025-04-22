@@ -8,30 +8,21 @@
     <meta name="author" content="SoundSynths">
     <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#1a1a2e">
-
-    <!-- Open Graph / Facebook -->
     <meta property="og:title" content="Sound Synths - Retro Synthesizers for Music Creators">
     <meta property="og:description" content="Discover retro-inspired synthesizers for bedroom producers and sound creators. Mythical, drone, and cloud synths with neon glow effects.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="http://soundsynths.netlify.app/">
-    <meta property="og:image" content="http://soundsynths.netlify.app/assets/og-image.jpg"> <!-- Replace with actual image URL -->
+    <meta property="og:image" content="http://soundsynths.netlify.app/assets/og-image.jpg">
     <meta property="og:site_name" content="Sound Synths">
-
-    <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Sound Synths - Retro Synthesizers for Music Creators">
     <meta name="twitter:description" content="Retro-inspired synths for bedroom producers and sound creators. Explore mythical, drone, and cloud synths.">
-    <meta name="twitter:image" content="http://soundsynths.netlify.app/assets/og-image.jpg"> <!-- Replace with actual image URL -->
-    <meta name="twitter:site" content="@SoundSynths"> <!-- Replace with your X handle -->
-
-    <!-- Canonical URL -->
+    <meta name="twitter:image" content="http://soundsynths.netlify.app/assets/og-image.jpg">
+    <meta name="twitter:site" content="@SoundSynths">
     <link rel="canonical" href="http://soundsynths.netlify.app/">
-
-    <!-- Favicon and Manifest -->
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png"> <!-- 180x180 PNG -->
-    <link rel="manifest" href="/manifest.json"> <!-- Web app manifest -->
-
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/manifest.json">
     <title>Sound Synths - Retro Synthesizers for Music Creators</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
@@ -53,19 +44,18 @@
             position: relative;
         }
 
-        /* UI Scaling Wrapper */
         .ui-scale-wrapper {
             transform: scale(0.85);
             transform-origin: center top;
-            width: 117.65%; /* 100% / 0.85 to compensate scaling */
+            width: 117.65%;
             max-width: 100vw;
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
+            padding-bottom: 0.5rem;
         }
 
-        /* Sound Wave Background */
         .soundwave-bg {
             position: fixed;
             top: 0;
@@ -103,7 +93,6 @@
             margin: 0 auto;
         }
 
-        /* 3D Glowing Logo */
         h1 {
             color: #ff00ff;
             font-size: 2.5rem;
@@ -115,7 +104,7 @@
             margin-bottom: 2.5rem;
             transform: translateZ(20px);
             animation: flicker 4s infinite;
-            -webkit-animation: flicker 4s infinite; /* Safari support */
+            -webkit-animation: flicker 4s infinite;
         }
 
         @keyframes flicker {
@@ -123,7 +112,6 @@
             20%, 21.9%, 63%, 63.9%, 65%, 69.9% { opacity: 0.6; }
         }
 
-        /* Menu Items */
         .menu-item {
             position: relative;
             margin: 0.9375rem 0;
@@ -156,7 +144,6 @@
             border-color: #ff00ff;
         }
 
-        /* Glow Effect */
         .glow-effect {
             position: absolute;
             top: 50%;
@@ -169,10 +156,9 @@
             pointer-events: none;
         }
 
-        /* Footer */
         footer {
             position: relative;
-            margin-top: 2.5rem;
+            margin-top: 1rem;
             padding: 1.5rem;
             width: 100%;
             text-align: center;
@@ -180,25 +166,14 @@
             font-size: 0.9rem;
             text-shadow: 0 0 10px #00ffff;
             z-index: 1;
-            background: rgba(0, 0, 0, 0.3); /* Slight background for contrast */
-            min-height: 60px; /* Ensure visibility */
+            background: rgba(0, 0, 0, 0.3);
+            min-height: 60px;
         }
 
         footer p {
-            margin: 0.5rem 0;
+            margin: 0;
         }
 
-        footer a {
-            color: #ff00ff;
-            text-decoration: none;
-            margin: 0 0.5rem;
-        }
-
-        footer a:hover {
-            text-shadow: 0 0 10px #ff00ff;
-        }
-
-        /* Mobile Optimization */
         @media (max-width: 768px) {
             h1 {
                 font-size: 1.8rem;
@@ -216,6 +191,7 @@
                 font-size: 0.85rem;
                 padding: 1.25rem;
                 min-height: 70px;
+                margin-top: 0.75rem;
             }
         }
 
@@ -231,6 +207,7 @@
                 font-size: 0.8rem;
                 padding: 1rem;
                 min-height: 80px;
+                margin-top: 0.5rem;
             }
         }
     </style>
@@ -251,13 +228,7 @@
     </div>
     <footer>
         <p>© <span id="year"></span> SoundSynths. All Rights Reserved.</p>
-        <p>
-            <a href="https://github.com/SoundSynths" target="_blank" rel="noopener me">GitHub</a> |
-            <a href="https://x.com/SoundSynths" target="_blank" rel="noopener me">X</a>
-        </p>
     </footer>
-
-    <!-- Schema.org Structured Data -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -265,17 +236,11 @@
         "name": "Sound Synths",
         "description": "Retro-inspired synthesizers for bedroom producers, musicians, and sound creators.",
         "url": "http://soundsynths.netlify.app/",
-        "sameAs": [
-            "https://github.com/SoundSynths",
-            "https://x.com/SoundSynths"
-        ],
         "genre": ["Electronic", "Retro", "Synthwave"],
         "instrument": ["Synthesizer"]
     }
     </script>
-
     <script>
-        // Dynamic Copyright Year
         document.getElementById('year').textContent = new Date().getFullYear();
     </script>
 </body>
