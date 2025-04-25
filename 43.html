@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>44AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #000;
+            color: #00aaff;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        header {
+            flex: 0 0 8%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo {
+            font-size: 1.5em;
+            text-shadow: 0 0 5px #00aaff;
+            text-align: center;
+        }
+        .controls {
+            flex: 0 0 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+        }
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .eqGrid, .beatGrid {
+            width: 200px;
+            height: 200px;
+            position: relative;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 9px, #00aaff 10px),
+                repeating-linear-gradient(
+                90deg, transparent, transparent 9px, #00aaff 10px);
+            background-size: 10px 10px;
+            background-color: #000;
+            border: 2px solid #00aaff;
+            cursor: crosshair;
+        }
+        .eqCursor, .beatCursor {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #00aaff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 5px #00aaff;
+            z-index: 10;
+        }
+        .visualizer {
+            flex: 0 0 20%;
+            width: 100%;
+            padding: 5px;
+        }
+        footer {
+            flex: 0 0 5%;
+            text-align: center;
+            font-size: 0.7em;
+            padding: 3px;
+        }
+        select, button {
+            background: #000;
+            color: #00aaff;
+            border: 1px solid #00aaff;
+            padding: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background 0.05s, color 0.05s;
+            touch-action: none;
+            overscroll-behavior: none;
+        }
+        select:active, button:active, button.active {
+            background: #00aaff;
+            color: #000;
+        }
+        select:focus {
+            outline: none;
+        }
+        canvas {
+            width: 100%;
+            height: 100px;
+            background: #111;
+            border: 1px solid #00aaff;
+        }
+        @media (max-width: 600px) {
+            .logo {
+                font-size: 1.2em;
+            }
+            .controls {
+                gap: 8px;
+                padding: 8px;
+            }
+            .control-buttons {
+                gap: 5px;
+            }
+            .eqGrid, .beatGrid {
+                width: 150px;
+                height: 150px;
+            }
+            .eqCursor, .beatCursor {
+                width: 6px;
+                height: 6px;
+            }
+            select, button {
+                font-size: 0.7em;
+                padding: 3px;
+            }
+            canvas {
+                height: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 class="logo">44AI</h1>
+    </header>
+    <section class="controls">
+        <div class="control-buttons">
+            <button onclick="generateLoop()">Generate Loop</button>
+            <button onclick="stopLoop()">Stop Loop</button>
+            <button id="isolateDrums" onclick="toggleIsolateDrums()">Isolate Drums</button>
+            <button id="isolateSynths" onclick="toggleIsolateSynths()">Isolate Synths</button>
+            <button onclick="tapTempo()">Tap Tempo</button>
+            <select id="bpmSelect">
+                <option value="110">110 BPM</option>
+                <option value="115">115 BPM</option>
+                <option value="120">120 BPM</option>
+                <option value="124">124 BPM</option>
+                <option value="128" selected>128 BPM</option>
+                <option value="130">130 BPM</option>
+                <option value="132">132 BPM</option>
+                <option value="136">136 BPM</option>
+                <option value="140">140 BPM</option>
+            </select>
+            <select id="synthSelect">
+                <option value="GridPulse">GridPulse (Bass)</option>
+                <option value="NeonShimmer">NeonShimmer (Pluck)</option>
+                <option value="DataPad">DataPad (Pad)</option>
+                <option value="CircuitLead">CircuitLead (Lead)</option>
+                <option value="VoidBass">VoidBass (Sub)</option>
+            </select>
+        </div>
+        <div class="eqGrid" id="eqGrid">
+            <div class="eqCursor" id="eqCursor"></div>
+        </div>
+        <div class="beatGrid" id="beatGrid">
+            <div class="beatCursor" id="beatCursor"></div>
+        </div>
+    </section>
+    <section class="visualizer">
+        <canvas id="waveform"></canvas>
+    </section>
+    <footer>
+        <p>© 2025 SoundSynths. All Rights Reserved.</p>
+    </footer>
+    <script>
+        // Web Audio API Setup
+        let ctx, analyser, compressor, eq;
+        let isolateDrums = false, isolateSynths = false;
+        let tapTimes = [];
+        const maxTapInterval = 2000; // 2 seconds max interval
+        let drumComplexity = 0.5; // 0 (simple) to 1 (complex)
+        let synthComplexity = 0.5; // 0 (simple) to 1 (complex)
+
+        function initAudio() {
+            if (!ctx || ctx.state === 'closed') {
+                try {
+                    ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    compressor = ctx.createDynamicsCompressor();
+                    compressor.threshold.setValueAtTime(-6, ctx.currentTime);
+                    compressor.ratio.setValueAtTime(4, ctx.currentTime);
+                    compressor.attack.setValueAtTime(0.003, ctx.currentTime);
+                    compressor.release.setValueAtTime(0.1, ctx.currentTime);
+                    eq = ctx.createBiquadFilter();
+                    eq.type = 'peaking';
+                    eq.frequency.setValueAtTime(2000, ctx.currentTime);
+                    eq.gain.setValueAtTime(3, ctx.currentTime); // Light mid-high boost
+                    eq.Q.setValueAtTime(1, ctx.currentTime);
+                    compressor.connect(eq);
+                    eq.connect(ctx.destination);
+                    analyser = ctx.createAnalyser();
+                    analyser.fftSize = 256; // Reduced for mobile
+                    eq.connect(analyser);
+                    console.log("AudioContext initialized");
+                } catch (e) {
+                    console.error("AudioContext initialization failed:", e);
+                }
+            }
+            if (ctx.state === 'suspended') {
+                ctx.resume().then(() => console.log("AudioContext resumed"));
+            }
+        }
+
+        function createSound(type, freq = 440, velocity = 1) {
+            initAudio();
+            if (!ctx) {
+                console.error("AudioContext not initialized");
+                return;
+            }
+            const now = ctx.currentTime;
+            const masterGain = ctx.createGain();
+            masterGain.gain.setValueAtTime(velocity * 0.7, now);
+            masterGain.connect(compressor);
+
+            if (type === 'kick') {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(30, now + 0.15);
+                gain.gain.setValueAtTime(1.2 * velocity, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                osc.connect(gain);
+                gain.connect(masterGain);
+                osc.start(now);
+                osc.stop(now + 0.5);
+                osc.onended = () => {
+                    osc.disconnect();
+                    gain.disconnect();
+                };
+            } else if (type === 'clap') {
+                const noise = ctx.createBufferSource();
+                const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.12, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+                noise.buffer = buffer;
+                const gain = ctx.createGain();
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(1200, now);
+                filter.Q.setValueAtTime(2, now);
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(masterGain);
+                gain.gain.setValueAtTime(0.8 * velocity, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                noise.start(now);
+                noise.stop(now + 0.12);
+                noise.onended = () => {
+                    noise.disconnect();
+                    filter.disconnect();
+                    gain.disconnect();
+                };
+            } else if (type === 'hihat') {
+                const noise = ctx.createBufferSource();
+                const buffer = ctx.createBuffer(1, ctx.sampleRate * (drumComplexity > 0.7 ? 0.2 : 0.04), ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+                noise.buffer = buffer;
+                const gain = ctx.createGain();
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.setValueAtTime(7000, now);
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(masterGain);
+                gain.gain.setValueAtTime(0.3 * velocity, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + (drumComplexity > 0.7 ? 0.2 : 0.04));
+                noise.start(now);
+                noise.stop(now + (drumComplexity > 0.7 ? 0.2 : 0.04));
+                noise.onended = () => {
+                    noise.disconnect();
+                    filter.disconnect();
+                    gain.disconnect();
+                };
+            } else if (type === 'perc') {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(800, now);
+                gain.gain.setValueAtTime(0.2 * velocity, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                osc.connect(gain);
+                gain.connect(masterGain);
+                osc.start(now);
+                osc.stop(now + 0.08);
+                osc.onended = () => {
+                    osc.disconnect();
+                    gain.disconnect();
+                };
+            } else if (type === 'bass') {
+                const osc1 = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc1.type = 'sawtooth';
+                osc1.frequency.setValueAtTime(freq, now);
+                gain.gain.setValueAtTime(0.3 * velocity, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                osc1.connect(gain);
+                gain.connect(masterGain);
+                osc1.start(now);
+                osc1.stop(now + 0.4);
+                osc1.onended = () => {
+                    osc1.disconnect();
+                    gain.disconnect();
+                };
+            } else if (type.startsWith('synth')) {
+                const synthType = document.getElementById('synthSelect').value;
+                const osc1 = ctx.createOscillator();
+                const osc2 = ctx.createOscillator();
+                const gain = ctx.createGain();
+                const filter = ctx.createBiquadFilter();
+                const lfo = ctx.createOscillator();
+                const lfoGain = ctx.createGain();
+
+                lfo.type = 'sine';
+                lfo.frequency.setValueAtTime(1.5, now); // Light modulation
+                lfoGain.gain.setValueAtTime(50, now); // Subtle LFO depth
+                lfo.connect(lfoGain);
+                lfo.start(now);
+
+                if (synthType === 'GridPulse') {
+                    osc1.type = 'square';
+                    osc2.type = 'square';
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(250, now);
+                    filter.Q.setValueAtTime(3, now);
+                    gain.gain.setValueAtTime(0.25 * velocity, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                    osc2.frequency.setValueAtTime(freq * 1.02, now);
+                    lfoGain.connect(filter.frequency);
+                } else if (synthType === 'NeonShimmer') {
+                    osc1.type = 'triangle';
+                    osc2.type = 'triangle';
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(1800, now);
+                    filter.Q.setValueAtTime(2, now);
+                    gain.gain.setValueAtTime(0.2 * velocity, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    osc2.frequency.setValueAtTime(freq * 2.0, now); // Octave up
+                } else if (synthType === 'DataPad') {
+                    osc1.type = 'sawtooth';
+                    osc2.type = 'sawtooth';
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(500, now);
+                    filter.Q.setValueAtTime(1, now);
+                    gain.gain.setValueAtTime(0.18 * velocity, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+                    osc2.frequency.setValueAtTime(freq * 1.01, now);
+                    lfoGain.connect(filter.frequency);
+                } else if (synthType === 'CircuitLead') {
+                    osc1.type = 'square';
+                    osc2.type = 'square';
+                    filter.type = 'bandpass';
+                    filter.frequency.setValueAtTime(1000, now);
+                    filter.Q.setValueAtTime(5, now);
+                    gain.gain.setValueAtTime(0.15 * velocity, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                    osc2.frequency.setValueAtTime(freq * 1.03, now);
+                    lfoGain.connect(filter.frequency);
+                } else if (synthType === 'VoidBass') {
+                    osc1.type = 'sine';
+                    osc2.type = 'sawtooth';
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(100, now);
+                    filter.Q.setValueAtTime(4, now);
+                    gain.gain.setValueAtTime(0.28 * velocity, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                    osc2.frequency.setValueAtTime(freq * 1.01, now);
+                    lfoGain.connect(filter.frequency);
+                }
+
+                osc1.frequency.setValueAtTime(freq, now);
+                if (Math.random() > 0.7) {
+                    osc1.frequency.exponentialRampToValueAtTime(freq * 1.02, now + 0.05);
+                    osc1.frequency.exponentialRampToValueAtTime(freq, now + 0.1);
+                }
+
+                osc1.connect(filter);
+                osc2.connect(filter);
+                filter.connect(gain);
+                gain.connect(masterGain);
+
+                const duration = synthType === 'GridPulse' ? 0.5 : synthType === 'NeonShimmer' ? 0.3 : synthType === 'DataPad' ? 2.5 : synthType === 'CircuitLead' ? 0.4 : 0.6;
+                osc1.start(now);
+                osc2.start(now);
+                lfo.stop(now + duration);
+                osc1.stop(now + duration);
+                osc2.stop(now + duration);
+                osc1.onended = () => {
+                    osc1.disconnect();
+                    osc2.disconnect();
+                    filter.disconnect();
+                    gain.disconnect();
+                    lfo.disconnect();
+                    lfoGain.disconnect();
+                };
+            }
+            console.log(`Created sound: ${type}`);
+        }
+
+        // Synth and Bass Frequencies (G Minor Scale)
+        const synthFrequencies = {
+            GridPulse: [98.00, 123.47, 146.83, 196.00], // G2, A#2, C3, G3
+            NeonShimmer: [392.00, 493.88, 587.33, 783.99], // G4, A#4, C5, G5
+            DataPad: [196.00, 246.94, 293.66, 392.00], // G3, A#3, C4, G4
+            CircuitLead: [392.00, 493.88, 587.33, 783.99], // G4, A#4, C5, G5
+            VoidBass: [73.42, 98.00, 123.47, 146.83], // C2, G2, A#2, C3
+            bass: [98.00, 123.47, 146.83] // G2, A#2, C3
+        };
+
+        // Waveform Visualizer
+        function initVisualizer() {
+            initAudio();
+            const canvas = document.getElementById('waveform');
+            if (!canvas) {
+                console.error("Canvas element not found");
+                return;
+            }
+            const ctx2d = canvas.getContext('2d');
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function draw() {
+                requestAnimationFrame(draw);
+                analyser.getByteTimeDomainData(dataArray);
+                ctx2d.fillStyle = '#111';
+                ctx2d.fillRect(0, 0, canvas.width, canvas.height);
+                ctx2d.lineWidth = 1;
+                ctx2d.strokeStyle = '#00aaff';
+                ctx2d.beginPath();
+                const sliceWidth = canvas.width / bufferLength;
+                let x = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    const v = dataArray[i] / 128.0;
+                    const y = (v * canvas.height) / 2;
+                    if (i === 0) ctx2d.moveTo(x, y);
+                    else ctx2d.lineTo(x, y);
+                    x += sliceWidth;
+                }
+                ctx2d.lineTo(canvas.width, canvas.height / 2);
+                ctx2d.stroke();
+            }
+            draw();
+            console.log("Visualizer initialized");
+        }
+
+        // EQ Grid (Controls mastering EQ)
+        function initEQGrid() {
+            const grid = document.getElementById('eqGrid');
+            const cursor = document.getElementById('eqCursor');
+            if (!grid || !cursor) {
+                console.error("EQ grid or cursor not found");
+                return;
+            }
+            let isDragging = false;
+
+            function updateEQ(x, y) {
+                const gridWidth = window.innerWidth <= 600 ? 150 : 200;
+                const eqFreq = 1000 + (x / gridWidth) * 3000;
+                const eqGain = 0 + (y / gridWidth) * 6;
+                eq.frequency.setValueAtTime(eqFreq, ctx.currentTime);
+                eq.gain.setValueAtTime(eqGain, ctx.currentTime);
+                cursor.style.left = `${x}px`;
+                cursor.style.top = `${y}px`;
+                console.log(`EQ updated: freq=${eqFreq}, gain=${eqGain}`);
+            }
+
+            function handleMove(e) {
+                e.preventDefault();
+                if (!isDragging) return;
+                const rect = grid.getBoundingClientRect();
+                let x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+                let y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+                const gridWidth = window.innerWidth <= 600 ? 150 : 200;
+                x = Math.max(0, Math.min(gridWidth, x));
+                y = Math.max(0, Math.min(gridWidth, y));
+                updateEQ(x, y);
+            }
+
+            grid.addEventListener('mousedown', () => { isDragging = true; }, { passive: true });
+            grid.addEventListener('touchstart', (e) => { isDragging = true; e.preventDefault(); }, { passive: false });
+            document.addEventListener('mouseup', () => { isDragging = false; }, { passive: true });
+            document.addEventListener('touchend', () => { isDragging = false; }, { passive: true });
+            grid.addEventListener('mousemove', handleMove, { passive: false });
+            grid.addEventListener('touchmove', handleMove, { passive: false });
+
+            const gridWidth = window.innerWidth <= 600 ? 150 : 200;
+            updateEQ(gridWidth / 2, gridWidth / 2);
+            console.log("EQ grid initialized");
+        }
+
+        // Complexity Grid (Drums and Synths)
+        function initBeatGrid() {
+            const grid = document.getElementById('beatGrid');
+            const cursor = document.getElementById('beatCursor');
+            if (!grid || !cursor) {
+                console.error("Beat grid or cursor not found");
+                return;
+            }
+            let isDragging = false;
+
+            function updateComplexity(x, y) {
+                const gridWidth = window.innerWidth <= 600 ? 150 : 200;
+                drumComplexity = x / gridWidth;
+                synthComplexity = y / gridWidth;
+                cursor.style.left = `${x}px`;
+                cursor.style.top = `${y}px`;
+                console.log(`Complexity updated: drum=${drumComplexity}, synth=${synthComplexity}`);
+            }
+
+            function handleMove(e) {
+                e.preventDefault();
+                if (!isDragging) return;
+                const rect = grid.getBoundingClientRect();
+                let x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+                let y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+                const gridWidth = window.innerWidth <= 600 ? 150 : 200;
+                x = Math.max(0, Math.min(gridWidth, x));
+                y = Math.max(0, Math.min(gridWidth, y));
+                updateComplexity(x, y);
+            }
+
+            grid.addEventListener('mousedown', () => { isDragging = true; }, { passive: true });
+            grid.addEventListener('touchstart', (e) => { isDragging = true; e.preventDefault(); }, { passive: false });
+            document.addEventListener('mouseup', () => { isDragging = false; }, { passive: true });
+            document.addEventListener('touchend', () => { isDragging = false; }, { passive: true });
+            grid.addEventListener('mousemove', handleMove, { passive: false });
+            grid.addEventListener('touchmove', handleMove, { passive: false });
+
+            const gridWidth = window.innerWidth <= 600 ? 150 : 200;
+            updateComplexity(gridWidth / 2, gridWidth / 2);
+            console.log("Beat grid initialized");
+        }
+
+        // Isolate Functions
+        function toggleIsolateDrums() {
+            const drumsButton = document.getElementById('isolateDrums');
+            const synthsButton = document.getElementById('isolateSynths');
+            isolateDrums = !isolateDrums;
+            isolateSynths = false;
+            drumsButton.classList.toggle('active', isolateDrums);
+            synthsButton.classList.remove('active');
+            console.log(`Isolate drums: ${isolateDrums}`);
+        }
+
+        function toggleIsolateSynths() {
+            const drumsButton = document.getElementById('isolateDrums');
+            const synthsButton = document.getElementById('isolateSynths');
+            isolateSynths = !isolateSynths;
+            isolateDrums = false;
+            synthsButton.classList.toggle('active', isolateSynths);
+            drumsButton.classList.remove('active');
+            console.log(`Isolate synths: ${isolateSynths}`);
+        }
+
+        // AI Sequencer
+        let isPlaying = false;
+        let nextNoteTime = 0;
+        let currentStep = 0;
+        const scheduleAheadTime = 0.1; // 100ms for stability
+        const tracks = ['kick', 'clap', 'hihat', 'perc', 'bass', 'synth1'];
+        let patterns = {};
+
+        function generatePatterns() {
+            const steps = window.innerWidth <= 600 ? 8 : 16;
+            patterns = {};
+            tracks.forEach(track => {
+                patterns[track] = new Array(steps).fill(false);
+                for (let i = 0; i < steps; i++) {
+                    if (track === 'kick') {
+                        if (i % 4 === 0) patterns[track][i] = true; // Four-on-the-floor
+                        if (drumComplexity > 0.6 && (i % 4 === 2) && Math.random() > 0.8) patterns[track][i] = true;
+                    } else if (track === 'clap') {
+                        if (i % 8 === 4) patterns[track][i] = true; // Claps on 2 and 4
+                        if (drumComplexity > 0.7 && (i % 8 === 6) && Math.random() > 0.7) patterns[track][i] = true;
+                    } else if (track === 'hihat') {
+                        if (i % 2 === 0) patterns[track][i] = drumComplexity > 0.3; // Steady hi-hats
+                        if (drumComplexity > 0.6 && (i % 4 === 1 || i % 4 === 3) && Math.random() > 0.8) patterns[track][i] = true;
+                    } else if (track === 'perc') {
+                        if ((i % 4 === 1 || i % 4 === 3) && Math.random() > (0.9 - drumComplexity * 0.5)) patterns[track][i] = true;
+                    } else if (track === 'bass') {
+                        if (patterns['kick'][i] || (i % 4 === 1 && Math.random() > (0.6 - drumComplexity * 0.4))) patterns[track][i] = true;
+                        if (synthComplexity > 0.8 && (i % 2 === 1) && Math.random() > 0.9) patterns[track][i] = true;
+                    } else if (track === 'synth1') {
+                        const synthType = document.getElementById('synthSelect').value;
+                        if (synthType === 'DataPad') {
+                            if (i % 8 === 0) patterns[track][i] = true; // Sustained pads
+                        } else if (synthType === 'NeonShimmer' || synthType === 'CircuitLead') {
+                            if ((i % 2 === 0) && Math.random() > (0.7 - synthComplexity * 0.5)) patterns[track][i] = true; // 8th-note arps
+                            if (synthComplexity > 0.7 && (i % 2 === 1) && Math.random() > 0.85) patterns[track][i] = true; // 16th-note
+                        } else {
+                            if ((i % 4 === 1 || i % 8 === 3) && Math.random() > (0.8 - synthComplexity * 0.6)) patterns[track][i] = true; // Bass pulses
+                            if (synthComplexity > 0.9 && Math.random() > 0.95) patterns[track][i] = true;
+                        }
+                        if (patterns[track].filter(x => x).length > 5) patterns[track][i] = false; // Sparse for mobile
+                    }
+                }
+            });
+            console.log("Generated patterns:", patterns);
+        }
+
+        function scheduleNote(time) {
+            const steps = window.innerWidth <= 600 ? 8 : 16;
+            tracks.forEach(track => {
+                if (patterns[track][currentStep]) {
+                    if (isolateDrums && (track === 'synth1' || track === 'bass')) return;
+                    if (isolateSynths && !(track === 'synth1' || track === 'bass')) return;
+
+                    const noteTime = time + (track === 'synth1' ? 0.005 * Math.random() : 0); // Light micro-timing
+                    console.log(`Scheduling ${track} at time ${noteTime}`);
+                    if (track === 'synth1') {
+                        const synthType = document.getElementById('synthSelect').value;
+                        const freq = synthFrequencies[synthType][Math.floor(Math.random() * 4)];
+                        createSound(track, freq, 1);
+                    } else if (track === 'bass') {
+                        const freq = synthFrequencies['bass'][Math.floor(Math.random() * 3)];
+                        createSound('bass', freq, 1);
+                    } else {
+                        createSound(track, 440, 1);
+                    }
+                }
+            });
+            currentStep = (currentStep + 1) % steps;
+        }
+
+        function scheduler() {
+            if (!isPlaying) return;
+            initAudio();
+            const bpm = parseInt(document.getElementById('bpmSelect').value);
+            const noteTime = (60 / bpm) / 4;
+            while (nextNoteTime < ctx.currentTime + scheduleAheadTime) {
+                scheduleNote(nextNoteTime);
+                nextNoteTime += noteTime;
+            }
+            requestAnimationFrame(scheduler);
+        }
+
+        function generateLoop() {
+            console.log("Generating loop");
+            initAudio();
+            stopLoop();
+            isPlaying = true;
+            generatePatterns();
+            nextNoteTime = ctx.currentTime + 0.1;
+            currentStep = 0;
+            scheduler();
+        }
+
+        function stopLoop() {
+            console.log("Stopping loop");
+            isPlaying = false;
+            isolateDrums = false;
+            isolateSynths = false;
+            document.getElementById('isolateDrums').classList.remove('active');
+            document.getElementById('isolateSynths').classList.remove('active');
+        }
+
+        function tapTempo() {
+            const now = Date.now();
+            tapTimes.push(now);
+            if (tapTimes.length > 1 && now - tapTimes[tapTimes.length - 2] > maxTapInterval) {
+                tapTimes = [now];
+            }
+            if (tapTimes.length >= 2) {
+                const intervals = [];
+                for (let i = 1; i < tapTimes.length; i++) {
+                    intervals.push(tapTimes[i] - tapTimes[i - 1]);
+                }
+                const avgInterval = intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
+                const bpm = Math.round(60000 / avgInterval);
+                const constrainedBpm = Math.max(110, Math.min(140, bpm));
+                const bpmSelect = document.getElementById('bpmSelect');
+                const options = Array.from(bpmSelect.options).map(opt => parseInt(opt.value));
+                const closestBpm = options.reduce((prev, curr) => 
+                    Math.abs(curr - constrainedBpm) < Math.abs(prev - constrainedBpm) ? curr : prev
+                );
+                bpmSelect.value = closestBpm;
+                if (isPlaying) generateLoop();
+            }
+            if (tapTimes.length > 4) tapTimes.shift();
+            console.log("Tap tempo registered");
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM loaded, initializing components");
+            initVisualizer();
+            initEQGrid();
+            initBeatGrid();
+        });
+
+        document.addEventListener('click', () => {
+            initAudio();
+        }, { once: true });
+
+        const synthSelect = document.getElementById('synthSelect');
+        if (synthSelect) {
+            synthSelect.addEventListener('change', () => {
+                if (isPlaying) generateLoop();
+            }, { passive: true });
+        } else {
+            console.error("Synth select element not found");
+        }
+
+        const bpmSelect = document.getElementById('bpmSelect');
+        if (bpmSelect) {
+            bpmSelect.addEventListener('change', () => {
+                if (isPlaying) generateLoop();
+            }, { passive: true });
+        } else {
+            console.error("BPM select element not found");
+        }
+    </script>
+</body>
+</html>
