@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1e3a8a">
+    <title>Rainfall Sleep Generator</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon.png">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        #app {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3a8a, #1e40af);
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            margin: 0 0 20px;
+            text-shadow: 0 0 10px #60a5fa;
+        }
+        .rain-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        .soundboard {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .control {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        label {
+            font-size: 1.1em;
+            color: #bfdbfe;
+        }
+        input[type="range"] {
+            width: 100%;
+            accent-color: #60a5fa;
+        }
+        .mastering {
+            border-top: 1px solid #60a5fa;
+            padding-top: 15px;
+        }
+        button {
+            background: #60a5fa;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #3b82f6;
+        }
+        @media (max-width: 400px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            #app {
+                padding: 15px;
+            }
+        }
+        .copyright {
+            text-align: center;
+            font-size: 0.9em;
+            color: #bfdbfe;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <canvas id="rainCanvas" class="rain-canvas"></canvas>
+        <h1>Rainfall Sleep Generator</h1>
+        <div class="soundboard">
+            <div class="control">
+                <label>Light Rain</label>
+                <input type="range" id="lightRain" min="0" max="1" step="0.01" value="0">
+            </div>
+            <div class="control">
+                <label>Heavy Rain</label>
+                <input type="range" id="heavyRain" min="0" max="1" step="0.01" value="0">
+            </div>
+            <div class="control">
+                <label>Ocean Waves</label>
+                <input type="range" id="oceanWaves" min="0" max="1" step="0.01" value="0">
+            </div>
+            <div class="control">
+                <label>Rain on Tent</label>
+                <input type="range" id="rainOnTent" min="0" max="1" step="0.01" value="0">
+            </div>
+        </div>
+        <div class="mastering">
+            <h2>Mastering Effects</h2>
+            <div class="control">
+                <label>Delay (ms)</label>
+                <input type="range" id="delayTime" min="0" max="1000" step="10" value="200">
+            </div>
+            <div class="control">
+                <label>Chorus Depth</label>
+                <input type="range" id="chorusDepth" min="0" max="0.01" step="0.001" value="0.005">
+            </div>
+            <div class="control">
+                <label>3D Panning</label>
+                <input type="range" id="panning" min="-1" max="1" step="0.1" value="0">
+            </div>
+        </div>
+        <button id="playPause">Play</button>
+        <div class="copyright">© 2025 soundsynths</div>
+    </div>
+
+    <script>
+        // Enhanced Rain Animation
+        const canvas = document.getElementById('rainCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const drops = [];
+        for (let i = 0; i < 200; i++) {
+            drops.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                length: Math.random() * 15 + 5,
+                speed: Math.random() * 10 + 5,
+                width: Math.random() * 1.5 + 0.5,
+                wind: Math.random() * 2 - 1
+            });
+        }
+
+        function animateRain() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drops.forEach(drop => {
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(96, 165, 250, ${drop.width / 2})`;
+                ctx.lineWidth = drop.width;
+                ctx.moveTo(drop.x, drop.y);
+                ctx.lineTo(drop.x + drop.wind, drop.y + drop.length);
+                ctx.stroke();
+                drop.y += drop.speed;
+                drop.x += drop.wind;
+                if (drop.y > canvas.height) {
+                    drop.y = -drop.length;
+                    drop.x = Math.random() * canvas.width;
+                }
+                if (drop.x < 0 || drop.x > canvas.width) drop.x = Math.random() * canvas.width;
+            });
+            requestAnimationFrame(animateRain);
+        }
+        animateRain();
+
+        // Web Audio API for Synthesized Sounds
+        const ctxAudio = new (window.AudioContext || window.webkitAudioContext)();
+        const soundNodes = {};
+        const gainNodes = {};
+        let isPlaying = false;
+
+        // Mastering Effects
+        const delay = ctxAudio.createDelay(1);
+        const delayGain = ctxAudio.createGain();
+        delayGain.gain.value = 0.5;
+        const chorus = ctxAudio.createOscillator();
+        chorus.type = 'sine';
+        chorus.frequency.value = 0.5;
+        const chorusGain = ctxAudio.createGain();
+        chorusGain.gain.value = 0.005;
+        const panner = ctxAudio.createPanner();
+        panner.panningModel = 'HRTF';
+
+        delayGain.connect(delay);
+        delay.connect(ctxAudio.destination);
+        chorus.connect(chorusGain);
+        chorusGain.connect(ctxAudio.destination);
+        panner.connect(ctxAudio.destination);
+
+        // Synthesize Sounds
+        function createLightRain() {
+            const bufferSize = ctxAudio.sampleRate * 2;
+            const buffer = ctxAudio.createBuffer(1, bufferSize, ctxAudio.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * 0.05;
+            }
+            const source = ctxAudio.createBufferSource();
+            source.buffer = buffer;
+            source.loop = true;
+            const filter = ctxAudio.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.value = 1000;
+            source.connect(filter);
+            return { node: source, output: filter };
+        }
+
+        function createHeavyRain() {
+            const bufferSize = ctxAudio.sampleRate * 2;
+            const buffer = ctxAudio.createBuffer(1, bufferSize, ctxAudio.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * 0.1;
+            }
+            const source = ctxAudio.createBufferSource();
+            source.buffer = buffer;
+            source.loop = true;
+            const filter = ctxAudio.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 500;
+            source.connect(filter);
+            return { node: source, output: filter };
+        }
+
+        function createOceanWaves() {
+            const bufferSize = ctxAudio.sampleRate * 5;
+            const buffer = ctxAudio.createBuffer(1, bufferSize, ctxAudio.sampleRate);
+            const data = buffer.getChannelData(0);
+            const waveCycle = ctxAudio.sampleRate * 5; // 5s cycle for slower, therapeutic waves
+            for (let i = 0; i < bufferSize; i++) {
+                const t = (i % waveCycle) / waveCycle;
+                const envelope = Math.sin(Math.PI * t) * 0.06; // Smoother, lower amplitude swell
+                data[i] = (Math.random() * 2 - 1) * envelope;
+            }
+            const source = ctxAudio.createBufferSource();
+            source.buffer = buffer;
+            source.loop = true;
+            const filter = ctxAudio.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 250; // Slightly lower frequency for calmer tone
+            filter.Q.value = 1;
+            source.connect(filter);
+            return { node: source, output: filter };
+        }
+
+        function createRainOnTent() {
+            const bufferSize = ctxAudio.sampleRate * 2;
+            const buffer = ctxAudio.createBuffer(1, bufferSize, ctxAudio.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * 0.08;
+            }
+            const source = ctxAudio.createBufferSource();
+            source.buffer = buffer;
+            source.loop = true;
+            const filter = ctxAudio.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 1500;
+            source.connect(filter);
+            return { node: source, output: filter };
+        }
+
+        // Initialize Sounds
+        ['lightRain', 'heavyRain', 'oceanWaves', 'rainOnTent'].forEach(key => {
+            let sound;
+            if (key === 'lightRain') sound = createLightRain();
+            else if (key === 'heavyRain') sound = createHeavyRain();
+            else if (key === 'oceanWaves') sound = createOceanWaves();
+            else if (key === 'rainOnTent') sound = createRainOnTent();
+            soundNodes[key] = sound.node;
+            gainNodes[key] = ctxAudio.createGain();
+            gainNodes[key].gain.value = 0;
+            sound.output.connect(gainNodes[key]);
+            gainNodes[key].connect(delayGain);
+            gainNodes[key].connect(chorusGain);
+            gainNodes[key].connect(panner);
+        });
+
+        // Control Sound Volumes
+        ['lightRain', 'heavyRain', 'oceanWaves', 'rainOnTent'].forEach(id => {
+            document.getElementById(id).addEventListener('input', e => {
+                if (gainNodes[id]) gainNodes[id].gain.value = e.target.value;
+            });
+        });
+
+        // Mastering Controls
+        document.getElementById('delayTime').addEventListener('input', e => {
+            delay.delayTime.value = e.target.value / 1000;
+        });
+        document.getElementById('chorusDepth').addEventListener('input', e => {
+            chorusGain.gain.value = e.target.value;
+        });
+        document.getElementById('panning').addEventListener('input', e => {
+            panner.setPosition(e.target.value, 0, 1 - Math.abs(e.target.value));
+        });
+
+        // Play/Pause
+        document.getElementById('playPause').addEventListener('click', () => {
+            if (!isPlaying) {
+                ctxAudio.resume();
+                chorus.start();
+                Object.values(soundNodes).forEach(node => node.start());
+                document.getElementById('playPause').textContent = 'Pause';
+                isPlaying = true;
+            } else {
+                Object.values(soundNodes).forEach(node => node.stop());
+                chorus.stop();
+                Object.keys(soundNodes).forEach(key => {
+                    let sound;
+                    if (key === 'lightRain') sound = createLightRain();
+                    else if (key === 'heavyRain') sound = createHeavyRain();
+                    else if (key === 'oceanWaves') sound = createOceanWaves();
+                    else if (key === 'rainOnTent') sound = createRainOnTent();
+                    soundNodes[key] = sound.node;
+                    sound.output.connect(gainNodes[key]);
+                });
+                document.getElementById('playPause').textContent = 'Play';
+                isPlaying = false;
+            }
+        });
+
+        // PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>
