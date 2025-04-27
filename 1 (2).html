@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="An immersive space sound generator with customizable cosmic audio effects.">
+    <title>Space Sound Generator</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon.png">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        #app {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            background: #000;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+            position: relative;
+            overflow: hidden;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            margin: 0 0 20px;
+            text-shadow: 0 0 10px #fff;
+        }
+        .cosmic-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+        .soundboard {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .control {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        label {
+            font-size: 1.1em;
+            color: #ddd;
+        }
+        input[type="range"] {
+            width: 100%;
+            accent-color: #999;
+        }
+        .mastering {
+            border-top: 1px solid #444;
+            padding-top: 15px;
+        }
+        button {
+            background: #444;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+        }
+        button:hover {
+            background: #666;
+            transform: scale(1.05);
+        }
+        button:focus {
+            outline: 2px solid #999;
+            outline-offset: 2px;
+        }
+        @media (max-width: 400px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            #app {
+                padding: 15px;
+            }
+        }
+        .copyright {
+            text-align: center;
+            font-size: 0.9em;
+            color: #bbb;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <canvas id="cosmicCanvas" class="cosmic-canvas"></canvas>
+        <h1>Space Sound Generator</h1>
+        <div class="soundboard">
+            <div class="control">
+                <label>Starlite Noise</label>
+                <input type="range" id="spaceNoise" min="0" max="1" step="0.01" value="0.5">
+            </div>
+            <div class="control">
+                <label>Close Encounter</label>
+                <input type="range" id="closeEncounter" min="0" max="1" step="0.01" value="0.3">
+            </div>
+            <div class="control">
+                <label>Ship Hum</label>
+                <input type="range" id="shipHum" min="0" max="1" step="0.01" value="0.3">
+            </div>
+            <div class="control">
+                <label>Digital Signals</label>
+                <input type="range" id="satelliteHums" min="0" max="1" step="0.01" value="0.5">
+            </div>
+        </div>
+        <div class="mastering">
+            <h2>Mastering Effects</h2>
+            <div class="control">
+                <label>Delay (ms)</label>
+                <input type="range" id="delayTime" min="0" max="1500" step="10" value="800">
+            </div>
+            <div class="control">
+                <label>Chorus Depth</label>
+                <input type="range" id="chorusDepth" min="0" max="0.02" step="0.001" value="0.012">
+            </div>
+            <div class="control">
+                <label>3D Panning</label>
+                <input type="range" id="panning" min="-1" max="1" step="0.1" value="0">
+            </div>
+        </div>
+        <button id="playPause" aria-label="Play or pause audio">Play</button>
+        <div class="copyright">© 2025 Space Sound Generator</div>
+    </div>
+
+    <script>
+        // Cosmic Animation
+        const canvas = document.getElementById('cosmicCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const stars = [];
+        for (let i = 0; i < 200; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                baseRadius: Math.random() * 1.5 + 0.5,
+                baseOpacity: Math.random() * 0.3 + 0.6,
+                glowPhase: Math.random() * Math.PI * 2,
+                glowSpeed: Math.random() * 0.015 + 0.01,
+                driftPhaseX: Math.random() * Math.PI * 2,
+                driftPhaseY: Math.random() * Math.PI * 2,
+                driftSpeedX: Math.random() * 0.03 + 0.01,
+                driftSpeedY: Math.random() * 0.03 + 0.01
+            });
+        }
+
+        function animateCosmic() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            stars.forEach(star => {
+                star.glowPhase += star.glowSpeed;
+                const glow = 0.5 + 0.5 * Math.sin(star.glowPhase);
+                const radius = star.baseRadius * (0.8 + 0.4 * glow);
+                const opacity = star.baseOpacity * (0.7 + 0.3 * glow);
+                star.driftPhaseX += star.driftSpeedX;
+                star.driftPhaseY += star.driftSpeedY;
+                star.x += 0.3 * Math.sin(star.driftPhaseX);
+                star.y += 0.3 * Math.cos(star.driftPhaseY);
+                if (star.x < 0) star.x += canvas.width;
+                if (star.x > canvas.width) star.x -= canvas.width;
+                if (star.y < 0) star.y += canvas.height;
+                if (star.y > canvas.height) star.y -= canvas.height;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+                ctx.fill();
+            });
+            requestAnimationFrame(animateCosmic);
+        }
+        animateCosmic();
+
+        // Web Audio API Setup
+        let ctxAudio;
+        try {
+            ctxAudio = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.error('Web Audio API not supported:', e);
+            alert('Web Audio API is not supported in this browser.');
+        }
+        const soundNodes = {};
+        const gainNodes = {};
+        let isPlaying = false;
+
+        // Mastering Effects
+        const compressor = ctxAudio.createDynamicsCompressor();
+        compressor.threshold.value = -20;
+        compressor.knee.value = 30;
+        compressor.ratio.value = 12;
+        compressor.attack.value = 0.003;
+        compressor.release.value = 0.25;
+
+        const delay = ctxAudio.createDelay(1.5);
+        const delayGain = ctxAudio.createGain();
+        delayGain.gain.value = 0.75;
+        const chorus = ctxAudio.createOscillator();
+        chorus.type = 'sine';
+        chorus.frequency.value = 0.5;
+        const chorusGain = ctxAudio.createGain();
+        chorusGain.gain.value = 0.012;
+        const panner = ctxAudio.createPanner();
+        panner.panningModel = 'HRTF';
+
+        const reverb = ctxAudio.createConvolver();
+        const reverbBuffer = ctxAudio.createBuffer(1, ctxAudio.sampleRate * 2, ctxAudio.sampleRate);
+        const reverbData = reverbBuffer.getChannelData(0);
+        for (let i = 0; i < reverbData.length; i++) {
+            reverbData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctxAudio.sampleRate * 0.5));
+        }
+        reverb.buffer = reverbBuffer;
+
+        delayGain.connect(delay);
+        delay.connect(reverb);
+        reverb.connect(compressor);
+        chorus.connect(chorusGain);
+        chorusGain.connect(compressor);
+        panner.connect(compressor);
+        compressor.connect(ctxAudio.destination);
+
+        // Sound Generators
+        function createSpaceNoise() {
+            const bufferSize = ctxAudio.sampleRate * 2;
+            const buffer = ctxAudio.createBuffer(1, bufferSize, ctxAudio.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                const t = i / ctxAudio.sampleRate;
+                const velocity = 0.6 + 0.4 * Math.random();
+                data[i] = (Math.random() * 2 - 1) * 0.1 * velocity * (0.8 + 0.2 * Math.sin(2 * Math.PI * 0.03 * t));
+            }
+            const source = ctxAudio.createBufferSource();
+            source.buffer = buffer;
+            source.loop = true;
+            const filter = ctxAudio.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 400;
+            source.connect(filter);
+            console.log('SpaceNoise created');
+            return { node: source, output: filter };
+        }
+
+        function createCloseEncounter() {
+            const bufferSize = ctxAudio.sampleRate * 12;
+            const buffer = ctxAudio.createBuffer(1, bufferSize, ctxAudio.sampleRate);
+            const data = buffer.getChannelData(0);
+            const minorPentatonic = [293.66, 349.23, 392.00, 466.16, 587.33];
+            let phase = 0;
+            for (let i = 0; i < bufferSize; i++) {
+                const t = i / ctxAudio.sampleRate;
+                const freqIndex = Math.floor(t * 0.5) % minorPentatonic.length;
+                const freq = minorPentatonic[freqIndex] * (1 + 0.1 * Math.random());
+                phase += 2 * Math.PI * freq / ctxAudio.sampleRate;
+                const velocity = 0.4 + 0.6 * Math.random();
+                const signal = Math.sin(phase) * 0.06 * velocity;
+                const silence = Math.random() < 0.4 ? 0 : 1;
+                data[i] = signal * silence * (0.5 + 0.5 * Math.sin(2 * Math.PI * 0.02 * t));
+            }
+            const source = ctxAudio.createBufferSource();
+            source.buffer = buffer;
+            source.loop = true;
+            const filter = ctxAudio.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 800;
+            filter.Q.value = 2;
+            source.connect(filter);
+            console.log('CloseEncounter created');
+            return { node: source, output: filter };
+        }
+
+        function createShipHum() {
+            const bufferSize = ctxAudio.sampleRate * 10;
+            const buffer = ctxAudio.createBuffer(1, bufferSize, ctxAudio.sampleRate);
+            const data = buffer.getChannelData(0);
+            const beepFrequencies = [523.25, 659.25, 783.99, 1046.50];
+            for (let i = 0; i < bufferSize; i++) {
+                const t = i / ctxAudio.sampleRate;
+                const hum = 0.1 * (Math.sin(2 * Math.PI * 60 * t) + 0.5 * Math.sin(2 * Math.PI * 90 * t));
+                const beep = Math.random() > 0.99 ? 0.05 * Math.sin(2 * Math.PI * beepFrequencies[Math.floor(Math.random() * 4)] * t) : 0;
+                const noise = (Math.random() * 2 - 1) * 0.02;
+                data[i] = (hum + beep + noise) * (0.6 + 0.4 * Math.sin(2 * Math.PI * 0.03 * t));
+            }
+            const source = ctxAudio.createBufferSource();
+            source.buffer = buffer;
+            source.loop = true;
+            const filter = ctxAudio.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 500;
+            source.connect(filter);
+            console.log('ShipHum created');
+            return { node: source, output: filter };
+        }
+
+        function createSatelliteHums() {
+            const bufferSize = ctxAudio.sampleRate * 5;
+            const buffer = ctxAudio.createBuffer(1, bufferSize, ctxAudio.sampleRate);
+            const data = buffer.getChannelData(0);
+            const dtmfFrequencies = [
+                [697, 1209], [697, 1336], [770, 1209], [770, 1336] // DTMF pairs
+            ];
+            for (let i = 0; i < bufferSize; i++) {
+                const t = i / ctxAudio.sampleRate;
+                let signal = 0;
+                const velocity = 0.7 + 0.3 * Math.random(); // Dynamic velocity
+
+                // 56k Modem Noises (FM screeches and squawks)
+                if (Math.random() < 0.04) {
+                    const baseFreq = 1000 + Math.random() * 1500; // 1000–2500 Hz
+                    const duration = 0.15;
+                    if (t % 1 < duration) {
+                        const envelope = Math.exp(-10 * (t % 1));
+                        const fmMod = 1 + 0.2 * Math.sin(20 * t); // Rapid FM
+                        signal += 0.08 * Math.sin(2 * Math.PI * baseFreq * fmMod * t) * envelope * velocity;
+                        // Add noise burst for grit
+                        signal += 0.03 * (Math.random() * 2 - 1) * envelope * velocity;
+                    }
+                }
+
+                // Digital Feedback (glitchy, distorted tones)
+                if (Math.random() < 0.03) {
+                    const freq = 1500 + Math.random() * 1000; // 1500–2500 Hz
+                    const duration = 0.1;
+                    if (t % 1.2 < duration) {
+                        const envelope = Math.exp(-15 * (t % 1.2));
+                        // Square wave for harsh digital sound
+                        const phase = 2 * Math.PI * freq * t;
+                        signal += 0.06 * (Math.sign(Math.sin(phase)) * 0.5) * envelope * velocity;
+                        // Add bit-crush effect
+                        signal += 0.02 * (Math.random() > 0.8 ? 1 : -1) * envelope * velocity;
+                    }
+                }
+
+                // Calculator Beeps (short square-wave beeps)
+                if (Math.random() < 0.05) {
+                    const freq = 2000 + Math.random() * 2000; // 2000–4000 Hz
+                    const duration = 0.05;
+                    if (t % 0.6 < duration) {
+                        const envelope = Math.exp(-30 * (t % 0.6));
+                        const phase = 2 * Math.PI * freq * t;
+                        signal += 0.05 * (Math.sign(Math.sin(phase)) * 0.5) * envelope * velocity;
+                    }
+                }
+
+                // Telephone Line Tones (DTMF-like dual tones)
+                if (Math.random() < 0.03) {
+                    const dtmfPair = dtmfFrequencies[Math.floor(Math.random() * dtmfFrequencies.length)];
+                    const duration = 0.2;
+                    if (t % 1.5 < duration) {
+                        const envelope = Math.exp(-8 * (t % 1.5));
+                        signal += 0.06 * (
+                            Math.sin(2 * Math.PI * dtmfPair[0] * t) +
+                            Math.sin(2 * Math.PI * dtmfPair[1] * t)
+                        ) * envelope * velocity * 0.5; // Halved amplitude for balance
+                        // Add faint static
+                        signal += 0.01 * (Math.random() * 2 - 1) * envelope * velocity;
+                    }
+                }
+
+                data[i] = signal;
+            }
+            const source = ctxAudio.createBufferSource();
+            source.buffer = buffer;
+            source.loop = true;
+            const highPass = ctxAudio.createBiquadFilter();
+            highPass.type = 'highpass';
+            highPass.frequency.value = 600; // Avoid overlap with Ship Hum and Starlite Noise
+            const notch = ctxAudio.createBiquadFilter();
+            notch.type = 'notch';
+            notch.frequency.value = 800; // Carve out space for Close Encounter
+            notch.Q.value = 2;
+            const delay = ctxAudio.createDelay(0.1);
+            delay.delayTime.value = 0.03; // Subtle echo for modem-like depth
+            source.connect(highPass);
+            highPass.connect(notch);
+            notch.connect(delay);
+            console.log('Digital Signals created, buffer length:', buffer.length);
+            return { node: source, output: delay };
+        }
+
+        // Initialize Sounds
+        ['spaceNoise', 'closeEncounter', 'shipHum', 'satelliteHums'].forEach(key => {
+            let sound;
+            if (key === 'spaceNoise') sound = createSpaceNoise();
+            else if (key === 'closeEncounter') sound = createCloseEncounter();
+            else if (key === 'shipHum') sound = createShipHum();
+            else if (key === 'satelliteHums') sound = createSatelliteHums();
+            soundNodes[key] = sound.node;
+            gainNodes[key] = ctxAudio.createGain();
+            gainNodes[key].gain.value = key === 'spaceNoise' ? 0.5 : 0.5; // Consistent gain
+            sound.output.connect(gainNodes[key]);
+            gainNodes[key].connect(delayGain);
+            gainNodes[key].connect(chorusGain);
+            gainNodes[key].connect(panner);
+            console.log(`${key} initialized, gain: ${gainNodes[key].gain.value}`);
+        });
+
+        // Control Sound Volumes
+        ['spaceNoise', 'closeEncounter', 'shipHum', 'satelliteHums'].forEach(id => {
+            const slider = document.getElementById(id);
+            if (slider) {
+                slider.addEventListener('input', e => {
+                    if (gainNodes[id]) {
+                        gainNodes[id].gain.value = e.target.value;
+                        console.log(`${id} gain set to: ${e.target.value}`);
+                    }
+                });
+            }
+        });
+
+        // Mastering Controls
+        document.getElementById('delayTime').addEventListener('input', e => {
+            delay.delayTime.value = e.target.value / 1000;
+        });
+        document.getElementById('chorusDepth').addEventListener('input', e => {
+            chorusGain.gain.value = e.target.value;
+        });
+        document.getElementById('panning').addEventListener('input', e => {
+            panner.setPosition(e.target.value, 0, 1 - Math.abs(e.target.value));
+        });
+
+        // Initialize Mastering Defaults
+        delay.delayTime.value = 0.8;
+        document.getElementById('delayTime').value = 800;
+        document.getElementById('chorusDepth').max = 0.02;
+        document.getElementById('chorusDepth').value = 0.012;
+
+        // Play/Pause Logic
+        document.getElementById('playPause').addEventListener('click', async () => {
+            if (!isPlaying) {
+                try {
+                    await ctxAudio.resume();
+                    chorus.start();
+                    Object.keys(soundNodes).forEach(key => {
+                        soundNodes[key].start();
+                        console.log(`${key} started`);
+                    });
+                    document.getElementById('playPause').textContent = 'Pause';
+                    isPlaying = true;
+                } catch (e) {
+                    console.error('Audio context resume failed:', e);
+                }
+            } else {
+                Object.keys(soundNodes).forEach(key => {
+                    soundNodes[key].stop();
+                    soundNodes[key].disconnect();
+                    console.log(`${key} stopped`);
+                });
+                chorus.stop();
+                chorus.disconnect();
+                ['spaceNoise', 'closeEncounter', 'shipHum', 'satelliteHums'].forEach(key => {
+                    let sound;
+                    if (key === 'spaceNoise') sound = createSpaceNoise();
+                    else if (key === 'closeEncounter') sound = createCloseEncounter();
+                    else if (key === 'shipHum') sound = createShipHum();
+                    else if (key === 'satelliteHums') sound = createSatelliteHums();
+                    soundNodes[key] = sound.node;
+                    sound.output.connect(gainNodes[key]);
+                    console.log(`${key} recreated`);
+                });
+                document.getElementById('playPause').textContent = 'Play';
+                isPlaying = false;
+            }
+        });
+
+        // PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(error => {
+                console.error('Service Worker registration failed:', error);
+            });
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
